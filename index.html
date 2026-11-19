@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}img,video{max-width:100%}[hidden]{display:none!important}</style>
+<title>SharpaDex Expert Mixture</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* layout: one reading column; the model drawn top-to-bottom as a signal path; figures and tables sit in the column, videos in a three-up row */
+:root{
+  --bg:#f7f8f8; --surface:#fcfcfb; --ink:#0f1413; --ink2:#4c5553; --ink3:#7b8482; --rule:#dfe3e2; --band:#e9eeec;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --forcebg:#e6effa; --newbg:#fdeee7; --newbg2:#e3f5ee;
+  --sans:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121514; --surface:#1a1d1c; --ink:#eef1f0; --ink2:#bcc4c1; --ink3:#8a9390; --rule:#2e3432; --band:#252b29;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --forcebg:#18283d; --newbg:#3a2218; --newbg2:#15302a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121514; --surface:#1a1d1c; --ink:#eef1f0; --ink2:#bcc4c1; --ink3:#8a9390; --rule:#2e3432; --band:#252b29;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --forcebg:#18283d; --newbg:#3a2218; --newbg2:#15302a; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+.wrap{max-width:900px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:44px}
+h1{font-size:30px;font-weight:600;margin:0;letter-spacing:-.01em;text-wrap:balance;line-height:1.2}
+h2{font-size:21px;font-weight:600;margin:0;text-wrap:balance;line-height:1.3}
+h3{font-size:15px;font-weight:600;margin:6px 0 0}
+p{margin:0;max-width:68ch;color:var(--ink2)}
+p b,li b{color:var(--ink);font-weight:600}
+ul{margin:0;padding-left:20px;max-width:68ch;color:var(--ink2);display:flex;flex-direction:column;gap:6px}
+section{display:flex;flex-direction:column;gap:14px;min-width:0}
+header{display:flex;flex-direction:column;gap:14px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+code,.mono{font-family:var(--mono);font-size:12.5px}
+code{background:var(--band);padding:1px 4px;border-radius:3px;overflow-wrap:anywhere}
+.lede{font-size:17px;color:var(--ink);max-width:62ch}
+nav{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13.5px}
+a{color:var(--s1)}
+a:focus-visible,[tabindex]:focus-visible,video:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.tiles{grid-template-columns:minmax(0,1fr)}}
+.tile{border-top:2px solid var(--ink);padding-top:10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile .n{font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.tile .n small{font-size:14px;font-weight:400;color:var(--ink3)}
+.tile .l{font-weight:600;font-size:14px}
+.tile .d{font-size:13px;color:var(--ink2)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.cap{font-size:13px;color:var(--ink3);max-width:72ch}
+/* signal path */
+.flow{display:flex;flex-direction:column;gap:6px}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+.stage{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3);margin-top:6px}
+.arrow{text-align:center;color:var(--ink3);font-size:13px;line-height:1}
+.blk{flex:1 1 120px;min-width:0;background:var(--bg);border:1px solid var(--rule);border-radius:4px;padding:7px 9px;display:flex;flex-direction:column;gap:1px}
+.blk b{font-size:13px;font-weight:600}
+.blk span{font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.blk.force{border-color:var(--s1);background:var(--forcebg)}
+.blk.e3{border-color:var(--s2);background:var(--newbg)}
+.blk.e4{border-color:var(--s3);background:var(--newbg2)}
+.blk.wide{flex-basis:100%}
+.blk.frozen{border-style:dashed}
+.key{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--ink2)}
+.key i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;border:1px solid var(--rule)}
+/* tables */
+.tw{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums;width:100%}
+th,td{text-align:right;padding:6px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal;min-width:150px}
+th{font-weight:600;color:var(--ink2);font-size:12.5px;border-bottom-color:var(--ink3)}
+tr.hl td{font-weight:600;background:var(--band)}
+tr.ctl td{color:var(--ink3)}
+td.note{white-space:normal;text-align:left;color:var(--ink2);min-width:200px}
+/* dot chart */
+.dots{display:grid;grid-template-columns:minmax(120px,210px) minmax(0,1fr) 52px;gap:0 12px;align-items:center;font-size:13.5px}
+.dots .name{padding:9px 0;line-height:1.25}
+.dots .name small{display:block;color:var(--ink3);font-size:12px}
+.track{position:relative;height:34px;border-left:1px solid var(--rule);border-right:1px solid var(--rule);background:linear-gradient(90deg,var(--rule) 1px,transparent 1px) 0 0/25% 100%}
+.track:hover,.track:focus-visible{background-color:var(--band)}
+.dot{position:absolute;top:50%;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:var(--ink3);opacity:.75}
+.mean{position:absolute;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:var(--s1);box-shadow:0 0 0 2px var(--surface)}
+.ctl .mean{background:var(--surface);box-shadow:inset 0 0 0 2.5px var(--ink3)}
+.dots .val{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.dots .ctl + .val,.dots .val.c{font-weight:400;color:var(--ink2)}
+.axis{position:relative;height:18px;font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.axis span{position:absolute;transform:translateX(-50%)}
+.axis span:first-child{transform:none}.axis span:last-child{transform:translateX(-100%)}
+/* gate bars */
+.gates{display:grid;grid-template-columns:minmax(110px,170px) minmax(0,1fr);gap:8px 12px;align-items:center;font-size:13.5px}
+.bar{display:flex;gap:2px;height:20px}
+.bar i{display:block;border-radius:3px;min-width:2px}
+.bar:hover i,.bar:focus-visible i{filter:brightness(1.08)}
+.gates .txt{grid-column:2;font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-top:-6px}
+.c1{background:var(--s1)}.c2{background:var(--s2)}.c3{background:var(--s3)}
+#tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12.5px;padding:6px 9px;border-radius:4px;max-width:260px;line-height:1.4}
+/* videos */
+.vids{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.vids{grid-template-columns:minmax(0,1fr)}}
+.vids figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.vids video{width:100%;max-width:100%;aspect-ratio:512/768;background:var(--band);border-radius:4px;display:block}
+.vids figcaption{font-size:13px;color:var(--ink2)}
+.vids figcaption b{color:var(--ink);font-weight:600}
+pre{margin:0;background:var(--band);border-radius:4px;padding:12px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.6}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:700px){.two{grid-template-columns:minmax(0,1fr)}}
+.two > div{display:flex;flex-direction:column;gap:8px;min-width:0}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">SharpaDex force policy · held-out results · 18 Nov 2026</div>
+  <h1>What a third and a fourth expert add to the action head</h1>
+  <p class="lede">Adding a wrench expert and then a tactile expert to the policy's two-expert action head lowers the held-out joint error from 15.87 to 15.20 mrad, about 4%. The gain repeats on every training seed. The control runs show it does not come from the wrench history or from the tactile world model's forecast.</p>
+  <p class="lede" style="font-size:15px;border-left:3px solid var(--s1);padding-left:12px"><strong>Update, 19 Nov 2026.</strong> This page describes the 8,000-step study. Trained for 50,000 steps, the four-expert model reaches 13.95 mrad and is the released model; the same model without force reaches 14.91 mrad and the two-expert model 14.34 mrad. The video world-model rollouts were repeated with the released model for three seeds. Current numbers: <a href="https://github.com/josyulakp/sharpadex-force-policy/blob/main/RESULTS.md">results page</a> · <a href="https://huggingface.co/josyula/sharpadex-force-policy">checkpoints</a>. Other pages: <a href="architecture/">model anatomy</a> · <a href="flow_diagnosis/">flow-matching diagnosis</a>.</p>
+  <div class="tiles">
+    <div class="tile"><span class="n">15.87 <small>mrad</small></span><span class="l">Two experts</span><span class="d">Two plain experts, 6.73 M weights. The reference model.</span></div>
+    <div class="tile"><span class="n">15.48 <small>mrad</small></span><span class="l">Three experts</span><span class="d">Adds a wrench expert. 2.4% lower, 7.19 M weights.</span></div>
+    <div class="tile"><span class="n">15.20 <small>mrad</small></span><span class="l">Four experts</span><span class="d">Adds a tactile expert. A further 1.8% lower, 7.57 M weights.</span></div>
+  </div>
+  <p class="cap">Mean absolute error of the predicted joint targets over a 16-step chunk, 58 joints, 51,258 held-out frames from 115 episodes of three tasks. Mean of three training seeds.</p>
+  <nav aria-label="Sections"><a href="#model">The model</a><a href="#head">The action head</a><a href="#training">Training</a><a href="#results">Held-out results</a><a href="#controls">Where the gain comes from</a><a href="#primesim">In the video world model</a><a href="#limits">Limits</a><a href="#reproduce">Reproduce</a></nav>
+</header>
+
+<section id="model">
+  <div class="eyebrow">The model</div>
+  <h2>One encoder pass, 19 query slots, and a head that mixes experts</h2>
+  <p>The policy reads three camera views and a short history of joint positions, fingertip forces and joint torques. It predicts the next 16 joint targets (0.53 s at 30 Hz) for both arms and both hands, 58 joints in all. Next to the action it forecasts the fingertip forces for the same 16 steps and makes three decisions about the near future.</p>
+  <div class="panel">
+    <div class="flow">
+      <div class="stage">Inputs · 70 tokens</div>
+      <div class="row">
+        <div class="blk frozen"><b>Cameras</b><span>head + 2 wrists · frozen DINOv2 ViT-S/14 · 3 × 17 tokens</span></div>
+        <div class="blk"><b>Joint positions</b><span>6 frames over 0.33 s · 58-D</span></div>
+        <div class="blk force"><b>Fingertip force and torque</b><span>6 frames · 10 fingertips × 6</span></div>
+        <div class="blk force"><b>Joint torques</b><span>6 frames · 58-D</span></div>
+        <div class="blk"><b>Task</b><span>1 token</span></div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="stage">Encoder</div>
+      <div class="row"><div class="blk wide"><b>Transformer encoder</b><span>4 layers · width 256 · 4 heads · all tokens attend to each other · run once per step</span></div></div>
+      <div class="arrow">↓</div>
+      <div class="stage">Read-out</div>
+      <div class="row"><div class="blk wide"><b>Transformer decoder over 19 learned slots</b><span>3 layers · the slots cross-attend into the encoded tokens</span></div></div>
+      <div class="row">
+        <div class="blk"><b>16 chunk slots</b><span>one per predicted time step</span></div>
+        <div class="blk"><b>3 decision slots</b><span>contact soon · phase · force level</span></div>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="stage">Heads</div>
+      <div class="row">
+        <div class="blk"><b>Plain experts A and B</b><span>each: 256 → 256 → 58, per chunk slot</span></div>
+        <div class="blk e3"><b>Wrench expert</b><span>chunk slots attend to 11 contact tokens</span></div>
+        <div class="blk e4"><b>Tactile expert</b><span>chunk slots attend to 16 tactile-image latents</span></div>
+      </div>
+      <div class="row">
+        <div class="blk wide"><b>Gate</b><span>the 3 decision slots → one softmax weight per expert, the same for all 16 steps · action = weighted sum of the experts' proposals</span></div>
+      </div>
+      <div class="row">
+        <div class="blk force"><b>Force head</b><span>change of 30 fingertip force components from the force now, per step</span></div>
+        <div class="blk"><b>Decision heads</b><span>contact in 0.33 s (yes/no) · phase · force level (none / light / firm / high)</span></div>
+      </div>
+    </div>
+    <div class="key"><span><i style="background:var(--forcebg);border-color:var(--s1)"></i>force signals</span><span><i style="background:var(--newbg);border-color:var(--s2)"></i>added in the three-expert model</span><span><i style="background:var(--newbg2);border-color:var(--s3)"></i>added in the four-expert model</span><span><i style="border-style:dashed;border-color:var(--ink3)"></i>frozen, features cached</span></div>
+  </div>
+  <ul>
+    <li><b>Vision is frozen.</b> Each 224 × 224 image goes through DINOv2 ViT-S/14 once, offline. Its patch features are pooled to a 4 × 4 grid plus the class token, so one camera is 17 tokens of width 384.</li>
+    <li><b>Actions are relative.</b> The target is the commanded joint position minus the current joint position, divided by each joint's spread in the training data.</li>
+    <li><b>Force is predicted as a change.</b> The force head outputs the difference from the force measured now, in units of 10 N. A model that outputs zero therefore predicts that the force stays as it is.</li>
+    <li><b>Decision slots feed the gate.</b> The same three slots that are trained to say whether contact is coming also choose how much each expert counts. On held-out frames the two-expert model calls contact-in-0.33-s correctly 97.5% of the time and the phase 95.1%.</li>
+  </ul>
+</section>
+
+<section id="head">
+  <div class="eyebrow">The action head</div>
+  <h2>Four experts, two kinds</h2>
+  <p>All experts propose the full 58-joint action for every chunk slot. They differ in what they can look at beyond the slot itself.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Expert</th><th>Extra input</th><th>Outputs</th><th>Own loss</th></tr></thead>
+    <tbody>
+      <tr><td>Plain A, plain B</td><td class="note">None. They read the chunk slot only.</td><td class="note">58 joint targets</td><td class="note">None. Trained only through the mixed action.</td></tr>
+      <tr><td>Wrench (third)</td><td class="note">One token for the current joint positions and one token per fingertip holding its last 10 frames of force and torque. The chunk slots attend to these 11 tokens. The design follows the FACET wrench encoder.</td><td class="note">58 joint targets and the next 60-D fingertip wrench</td><td class="note">Action error of its own proposal, plus 0.1 × wrench error</td></tr>
+      <tr><td>Tactile (fourth)</td><td class="note">16 latents of 128 numbers from the frozen TacForeSight tactile world model: 8 encode the fingertip deformation images of the last 8 frames, 8 are its forecast for the next 8 frames (0.27 s).</td><td class="note">58 joint targets</td><td class="note">Action error of its own proposal</td></tr>
+    </tbody>
+  </table></div>
+  <p>The gate is a single linear layer on the three decision slots followed by a softmax. It gives one weight per expert per frame, shared by all 16 steps of the chunk. The final action is the weighted sum.</p>
+  <p>The tactile world model is the only place where the fingertip camera images enter the policy. Everything else uses the 6-number force and torque reading per fingertip. The world model was trained on the eraser task only, so its latents are less reliable on the other two tasks.</p>
+</section>
+
+<section id="training">
+  <div class="eyebrow">Training</div>
+  <h2>Imitation on 4.3 hours of teleoperation, 8,000 steps</h2>
+  <div class="two">
+    <div>
+      <h3>Data and split</h3>
+      <div class="tw"><table>
+        <thead><tr><th>Task</th><th>Train ep.</th><th>Train h</th><th>Held-out ep.</th><th>In contact</th></tr></thead>
+        <tbody>
+          <tr><td>Clean plate with eraser</td><td>309</td><td>1.59</td><td>34</td><td>66%</td></tr>
+          <tr><td>Insert plug into socket</td><td>374</td><td>1.53</td><td>42</td><td>56%</td></tr>
+          <tr><td>Remove block from box</td><td>349</td><td>1.19</td><td>39</td><td>35%</td></tr>
+          <tr class="hl"><td>All three</td><td>1,032</td><td>4.31</td><td>115</td><td>54%</td></tr>
+        </tbody>
+      </table></div>
+      <p class="cap">SharpaDex v1.0, 30 Hz. 10% of each task's episodes are held out, spread over recording sessions, and never trained on. A frame counts as in contact when any fingertip force exceeds 1 N. The contact share is of all frames of the task (last row: held-out frames).</p>
+    </div>
+    <div>
+      <h3>Objective</h3>
+      <ul>
+        <li><b>Action:</b> mean absolute error of the mixed action, weight 1.0.</li>
+        <li><b>Force forecast:</b> mean absolute error of the force change, weight 0.5.</li>
+        <li><b>Decisions:</b> phase, contact-soon and force-level classification, weight 0.2.</li>
+        <li><b>Wrench expert:</b> its own action error plus 0.1 × wrench error, weight 1.0.</li>
+        <li><b>Tactile expert:</b> its own action error, weight 1.0.</li>
+      </ul>
+    </div>
+  </div>
+  <ul>
+    <li><b>Optimiser:</b> AdamW, learning rate 3 × 10⁻⁴ with 500 warm-up steps and a cosine decay, weight decay 0.01, batch 256, gradient clipping at 1.0, mixed precision.</li>
+    <li><b>Budget:</b> 8,000 steps for every model on this page unless stated. That is about 4.4 passes over the 465,256 training frames and takes 11 to 12 minutes on one L40S GPU.</li>
+    <li><b>Seeds:</b> every variant is trained three times (seeds 0, 1, 2). All three share the same held-out episodes.</li>
+    <li><b>Frozen parts:</b> the image encoder and the tactile world model are not updated. Their outputs are computed once and cached. The tactile latents use only what the robot has at time t; the forecast is conditioned on the last command sent, held constant.</li>
+    <li><b>Same recipe for all three models:</b> nothing but the expert switches changes between the two-, three- and four-expert runs.</li>
+  </ul>
+</section>
+
+<section id="results">
+  <div class="eyebrow">Held-out results</div>
+  <h2>Each added expert lowers the joint error, on every seed</h2>
+  <div class="panel">
+    <h3 style="margin:0">Joint error on held-out episodes, mrad (lower is better)</h3>
+    <div class="dots" id="dots"></div>
+    <div class="key"><span><i style="background:var(--s1);border-radius:50%;border:0"></i>mean of three seeds</span><span><i style="background:var(--ink3);border-radius:50%;border:0;width:7px;height:7px"></i>one seed</span><span><i style="border-radius:50%;border:2px solid var(--ink3);background:transparent"></i>control run (mean)</span></div>
+    <p class="cap">The axis starts at 15.0 mrad, not at zero, so the distances between models look larger than they are. Keeping the joints where they are scores 46.7 mrad.</p>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Joint error (mrad)</th><th>All</th><th>In contact</th><th>Free</th><th>Arms</th><th>Hands</th><th>First step</th></tr></thead>
+    <tbody>
+      <tr><td>Two experts</td><td>15.87</td><td>14.01</td><td>18.07</td><td>12.03</td><td>17.09</td><td>8.82</td></tr>
+      <tr><td>Three experts</td><td>15.48</td><td>13.81</td><td>17.46</td><td>11.69</td><td>16.69</td><td>8.54</td></tr>
+      <tr class="hl"><td>Four experts</td><td>15.20</td><td>13.58</td><td>17.11</td><td>11.49</td><td>16.38</td><td>8.23</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tw"><table>
+    <thead><tr><th>By task (mrad)</th><th>Eraser</th><th>Plug</th><th>Block</th></tr></thead>
+    <tbody>
+      <tr><td>Two experts</td><td>19.83</td><td>13.97</td><td>12.94</td></tr>
+      <tr><td>Three experts</td><td>19.48</td><td>13.51</td><td>12.58</td></tr>
+      <tr class="hl"><td>Four experts</td><td>19.25</td><td>13.16</td><td>12.34</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><b>The gain is small and consistent.</b> Two to three experts: −0.39 mrad (95% interval −0.48 to −0.30). Three to four: −0.28 (−0.36 to −0.19). Two to four: −0.67 (−0.78 to −0.53).</li>
+    <li><b>It is spread evenly.</b> Arms and hands, contact and free motion, and all three tasks improve by 3 to 6%. The plug task gains most (5.8%), the eraser task least (2.9%).</li>
+    <li><b>Free motion gains more than contact.</b> From two to four experts the error falls by 0.96 mrad in free motion and 0.43 in contact. Experts that read force signals were expected to help most in contact; they do not.</li>
+    <li><b>The force forecast does not improve.</b> It stays at 0.213 N with three experts and gets slightly worse with four, 0.216 N (+0.003, interval +0.001 to +0.004). Predicting that the force stays as it is scores 0.242 N.</li>
+  </ul>
+  <p class="cap">Intervals: paired bootstrap over the 115 held-out episodes, 4,000 resamples, on per-frame errors averaged over the three seeds.</p>
+</section>
+
+<section id="controls">
+  <div class="eyebrow">Where the gain comes from</div>
+  <h2>Not from the wrench history, and not from the tactile forecast</h2>
+  <p>Each new expert has a control run that keeps the expert, its own loss and its size, and removes the special input.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Model</th><th>Joint error (mrad)</th><th>Per seed</th><th>Difference to its control</th></tr></thead>
+    <tbody>
+      <tr><td>Three experts</td><td>15.48</td><td>15.50, 15.45, 15.50</td><td>−0.03 (−0.09 to +0.04)</td></tr>
+      <tr class="ctl"><td>Control: wrench expert sees only the joint-position token</td><td>15.51</td><td>15.60, 15.43, 15.51</td><td></td></tr>
+      <tr><td>Four experts</td><td>15.20</td><td>15.18, 15.17, 15.25</td><td>−0.03 (−0.08 to +0.01)</td></tr>
+      <tr class="ctl"><td>Control: tactile expert sees only the 8 measured latents, no forecast</td><td>15.23</td><td>15.24, 15.17, 15.29</td><td></td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><b>Wrench history adds nothing measurable.</b> The third expert helps just as much when it cannot see any force history. What remains is an extra expert that attends to the current joint positions and has its own action loss.</li>
+    <li><b>The tactile forecast adds nothing measurable.</b> This fits an earlier check of the tactile world model: forces read from its forecast were less accurate than assuming the force stays as it is (1.00 N against 0.29 N).</li>
+    <li><b>The fourth expert's source is not isolated.</b> Its control still sees the latents of the measured fingertip images. A run with no tactile tokens at all was not made, so the gain could come from the fingertip images or simply from one more expert with its own loss.</li>
+  </ul>
+
+  <h3>How the gate uses the experts</h3>
+  <div class="panel">
+    <div class="gates" id="gates"></div>
+    <div class="key"><span><i class="c1" style="border:0"></i>plain experts A + B</span><span><i class="c2" style="border:0"></i>wrench expert</span><span><i class="c3" style="border:0"></i>tactile expert</span></div>
+    <p class="cap">Mean gate weight on held-out frames, three seeds.</p>
+  </div>
+  <ul>
+    <li><b>The new experts take over.</b> With three experts the wrench expert carries 92% of the weight. With four, the wrench and tactile experts carry 93% between them, and the plain experts are almost unused outside contact.</li>
+    <li><b>The mixture beats its parts.</b> In the four-expert model the wrench expert's own proposal scores 15.51 mrad and the tactile expert's 15.80. Their gated mix scores 15.20.</li>
+    <li><b>In the two-expert model the split is not stable.</b> Which plain expert takes more weight in contact differs from seed to seed.</li>
+  </ul>
+
+  <h3>For scale</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Change to the two-expert model</th><th>Joint error (mrad)</th><th>Difference</th></tr></thead>
+    <tbody>
+      <tr><td>No force inputs or force outputs at all</td><td>16.23</td><td>+0.36</td></tr>
+      <tr><td>Two experts (reference)</td><td>15.87</td><td></td></tr>
+      <tr><td>Three experts</td><td>15.48</td><td>−0.39</td></tr>
+      <tr><td>Four experts</td><td>15.20</td><td>−0.67</td></tr>
+      <tr><td>Two experts, trained three times longer (25,000 steps)</td><td>14.56</td><td>−1.31</td></tr>
+      <tr class="hl"><td>Four experts, trained three times longer (25,000 steps)</td><td>14.16</td><td>−1.71</td></tr>
+    </tbody>
+  </table></div>
+  <p>Training longer helps about twice as much as both extra experts together, and the two add up. At 25,000 steps the four-expert model scores 14.16 mrad against 14.56 for two experts (seeds 14.13, 14.19, 14.16 against 14.58, 14.54, 14.55), so the experts' gain survives the longer run at 0.40 mrad. The three-expert model and the two controls have only been trained for 8,000 steps.</p>
+</section>
+
+<section id="primesim">
+  <div class="eyebrow">In the video world model</div>
+  <h2>Closed-loop check in PrimeSim: done for the two-expert model only</h2>
+  <p>Held-out error compares one prediction with one recorded action. It says nothing about what happens when the policy acts on the result of its own commands. To look at that without a robot, the policy is run inside PrimeSim, a video model that generates the three camera views from joint commands.</p>
+  <p><b>The three- and four-expert models have not been run this way.</b> PrimeSim produces camera pictures only. It has no fingertip force, no wrench history and no fingertip images, which are exactly the inputs of the two new experts. The results below are for the two-expert model.</p>
+
+  <h3>The world model</h3>
+  <ul>
+    <li><b>Base:</b> PrimeSim on Wan2.2-TI2V-5B, generating head and both wrist views together.</li>
+    <li><b>Fine-tuning:</b> a rank-32 LoRA plus the action-input layers, 6,000 steps on the eraser task and 6,000 more on all three tasks, on windows of 33 frames at 10 Hz.</li>
+    <li><b>Commands:</b> PrimeSim expects hand poses. A small fitted network turns joint commands into hand poses (0.5 to 1.5 mm and 0.1 to 0.2° error), and a fitted response model predicts the next joint state from the commands (17.9 mrad over all joints, 3.2 for the arms).</li>
+  </ul>
+  <div class="tw"><table>
+    <thead><tr><th>Does the video follow the commands? Pixel error, head camera, 3.2 s</th><th>All pixels</th><th>Moving pixels</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td>Generated with the recorded commands</td><td>11.4</td><td>32.8</td></tr>
+      <tr><td>Generated with another window's commands</td><td>24.2</td><td>66.2</td></tr>
+      <tr><td>Generated with zero commands</td><td>26.5</td><td>106.3</td></tr>
+      <tr><td>First frame repeated</td><td>26.4</td><td>106.5</td></tr>
+    </tbody>
+  </table></div>
+  <p class="cap">Mean absolute error in grey levels (0 to 255) against the recording, 16 held-out eraser windows, eraser-only checkpoint. This check has not been repeated for the three-task checkpoint.</p>
+
+  <h3>The loop</h3>
+  <ul>
+    <li><b>Start:</b> one real frame, 3.2 s into a held-out recording, and the two joint states before it.</li>
+    <li><b>Every 1.5 s:</b> the policy sees the latest generated frames and is called three times, 0.5 s apart. The commands are given to the video model, and its last frame becomes the next observation.</li>
+    <li><b>Force inputs:</b> the tactile and torque readings are replayed from the recording at the same time stamp. They match the imagined scene only while the rollout stays close to the recording.</li>
+  </ul>
+
+  <div class="vids">
+    <figure><video controls muted loop playsinline preload="metadata" src="videos/clean_plate_with_eraser.mp4" aria-label="Eraser task rollout"></video><figcaption><b>Clean plate with eraser</b></figcaption></figure>
+    <figure><video controls muted loop playsinline preload="metadata" src="videos/insert_plug_into_socket.mp4" aria-label="Plug task rollout"></video><figcaption><b>Insert plug into socket</b></figcaption></figure>
+    <figure><video controls muted loop playsinline preload="metadata" src="videos/remove_block_from_box.mp4" aria-label="Block task rollout"></video><figcaption><b>Remove block from box</b></figcaption></figure>
+  </div>
+  <p class="cap">One held-out episode per task. Left column: the recording. Right column: the two-expert policy acting in the video model. Rows: head camera, left wrist, right wrist.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Gap to the operator's commands (mrad)</th><th>0–3.2 s</th><th>3.2–6.4 s</th><th>6.4–9.6 s</th><th>Force forecast vs recorded (N)</th></tr></thead>
+    <tbody>
+      <tr><td>Eraser, all joints</td><td>88</td><td>133</td><td>133</td><td>0.22 / 0.47 / 0.56</td></tr>
+      <tr><td>Eraser, arms</td><td>39</td><td>73</td><td>89</td><td></td></tr>
+      <tr><td>Plug, all joints</td><td>36</td><td>66</td><td></td><td>0.18 / 0.16</td></tr>
+      <tr><td>Plug, arms</td><td>18</td><td>27</td><td></td><td></td></tr>
+      <tr><td>Block, all joints</td><td>28</td><td>65</td><td></td><td>0.05 / 0.15</td></tr>
+      <tr><td>Block, arms</td><td>26</td><td>45</td><td></td><td></td></tr>
+    </tbody>
+  </table></div>
+  <p class="cap">Four held-out episodes per task, two-expert model (seed 0), three-task world model. The gap measures how far the policy drifts from what the operator did at the same moment. It is not a success rate: after a few seconds the two need not be doing the same thing.</p>
+  <ul>
+    <li><b>Force inputs seem to keep the policy closer to the operator.</b> In the eraser-only world model, the two-expert policy's arm commands stay within 36 / 70 / 88 mrad of the operator's over the three windows; the policy without force inputs drifts to 45 / 113 / 104. Part of this is not earned: the replayed force readings carry information about what the operator did.</li>
+    <li><b>No task success is measured.</b> The videos look coherent, with robot, table and objects intact, but nothing checks whether the plate is wiped or the plug is in.</li>
+  </ul>
+</section>
+
+<section id="limits">
+  <div class="eyebrow">Limits</div>
+  <h2>What these results do not show</h2>
+  <ul>
+    <li><b>Open-loop error is not task success.</b> A 4% lower joint error on recorded frames has not been shown to change behaviour on a robot or in simulation.</li>
+    <li><b>The three- and four-expert models have no closed-loop result.</b> Running them in PrimeSim needs simulated wrench history and fingertip images, which do not exist yet.</li>
+    <li><b>The expert count and the expert type change together.</b> There is no run with three or four plain experts, so "more experts" and "an expert with its own loss and cross-attention" are not separated. A single plain expert was only tested on the eraser task alone, where it scored 19.25 mrad against 19.08 for two.</li>
+    <li><b>Controls at one training budget.</b> The control runs and the three-expert model exist only at 8,000 steps. At 25,000 steps only the two- and four-expert models were trained.</li>
+    <li><b>Tactile world model trained on one task.</b> Its latents are out of distribution on the plug and block tasks, and its forecast was not accurate on the task it was trained on.</li>
+    <li><b>Three seeds.</b> Seed spread is about 0.1 mrad, small against the 0.3 to 0.7 mrad gains but of the same size as the control differences.</li>
+  </ul>
+</section>
+
+<section id="reproduce">
+  <div class="eyebrow">Reproduce</div>
+  <h2>Commands</h2>
+<pre>python scripts/run_experiments.py three_tasks --only full,full_wrench_expert,full_wrench_expert_no_wrench_tokens
+python scripts/tf_features.py                      # tactile world-model latents for every frame
+python scripts/run_experiments.py tactile_expert   # four experts and its control
+python scripts/evaluate.py runs/tactile_expert/four_experts/seed0
+
+# two-expert policy inside the three-task video world model (run from the PrimeSim checkout)
+python scripts/ps_policy.py run=runs/three_tasks/full/seed0 task=insert_plug_into_socket \
+       model=sharpa_three_tasks step=6000 kinematics=kinematics_3_tasks.pt episodes=4</pre>
+</section>
+
+</div>
+<div id="tip" hidden></div>
+
+<script>
+(function(){
+  var lo=15.0, hi=16.0, pct=function(v){return (100*(v-lo)/(hi-lo)).toFixed(2)+"%";};
+  var rows=[
+    {n:"Two experts",s:"plain A + B",v:15.87,seeds:[15.89,15.79,15.93]},
+    {n:"Three experts",s:"+ wrench expert",v:15.48,seeds:[15.50,15.45,15.50]},
+    {n:"Control",s:"wrench expert without force history",v:15.51,seeds:[15.60,15.43,15.51],c:1},
+    {n:"Four experts",s:"+ tactile expert",v:15.20,seeds:[15.18,15.17,15.25]},
+    {n:"Control",s:"tactile expert without the forecast",v:15.23,seeds:[15.24,15.17,15.29],c:1}
+  ];
+  var d=document.getElementById("dots"), h="";
+  rows.forEach(function(r){
+    h+='<div class="name">'+r.n+'<small>'+r.s+'</small></div>'
+      +'<div class="track'+(r.c?' ctl':'')+'" tabindex="0" data-tip="'+r.n+' ('+r.s+'): mean '+r.v.toFixed(2)+' mrad. Seeds '+r.seeds.map(function(x){return x.toFixed(2);}).join(', ')+'.">'
+      +r.seeds.map(function(x){return '<span class="dot" style="left:'+pct(x)+'"></span>';}).join("")
+      +'<span class="mean" style="left:'+pct(r.v)+'"></span></div>'
+      +'<div class="val'+(r.c?' c':'')+'">'+r.v.toFixed(2)+'</div>';
+  });
+  h+='<div></div><div class="axis">'+[15,15.25,15.5,15.75,16].map(function(t){return '<span style="left:'+pct(t)+'">'+t.toFixed(2)+'</span>';}).join("")+'</div><div></div>';
+  d.innerHTML=h;
+
+  var g=[
+    {n:"Two experts",k:"in contact",p:[1,0,0]},{n:"",k:"free",p:[1,0,0]},
+    {n:"Three experts",k:"in contact",p:[.113,.887,0]},{n:"",k:"free",p:[.046,.954,0]},
+    {n:"Four experts",k:"in contact",p:[.115,.455,.430]},{n:"",k:"free",p:[.006,.622,.372]}
+  ], names=["plain","wrench","tactile"], gh="", last="";
+  g.forEach(function(r){
+    if(r.n) last=r.n;
+    var parts=r.p.map(function(x,i){return x>0?names[i]+" "+Math.round(100*x)+"%":null;}).filter(Boolean).join(" · ");
+    gh+='<div><b style="font-weight:600">'+r.n+'</b> <span style="color:var(--ink3)">'+r.k+'</span></div>'
+      +'<div class="bar" tabindex="0" data-tip="'+last+', '+r.k+': '+parts+'">'
+      +r.p.map(function(x,i){return x>0?'<i class="c'+(i+1)+'" style="flex:'+x+' 1 0"></i>':'';}).join("")+'</div>'
+      +'<div class="txt">'+parts+'</div>';
+  });
+  document.getElementById("gates").innerHTML=gh;
+
+  var tip=document.getElementById("tip");
+  function show(el,x,y){tip.textContent=el.getAttribute("data-tip");tip.hidden=false;
+    var w=tip.offsetWidth, hh=tip.offsetHeight;
+    tip.style.left=Math.max(8,Math.min(window.innerWidth-w-8,x+12))+"px";
+    tip.style.top=Math.max(8,y-hh-12)+"px";}
+  document.querySelectorAll("[data-tip]").forEach(function(el){
+    el.addEventListener("mousemove",function(e){show(el,e.clientX,e.clientY);});
+    el.addEventListener("mouseleave",function(){tip.hidden=true;});
+    el.addEventListener("focus",function(){var r=el.getBoundingClientRect();show(el,r.left+r.width/2,r.top);});
+    el.addEventListener("blur",function(){tip.hidden=true;});
+  });
+})();
+</script>
