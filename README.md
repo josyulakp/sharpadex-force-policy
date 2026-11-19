@@ -12,7 +12,7 @@ In one line: the four-expert model reaches 13.95 mrad joint error on the held-ou
 |---|---|
 | This repository | Code, configs, the fixed split, every run's config, training log and evaluation summary, result tables, figures, world-model rollout videos |
 | [Hugging Face: josyula/sharpadex-force-policy](https://huggingface.co/josyula/sharpadex-force-policy) | Released checkpoints (all seeds), tactile and video world-model weights, per-frame evaluation files |
-| Branch `gh-pages` | The HTML explainer pages |
+| Branch `gh-pages`, served at <https://josyulakp.github.io/sharpadex-force-policy/> | The HTML explainer pages and the [rollout videos page](https://josyulakp.github.io/sharpadex-force-policy/rollouts/) |
 
 Every parameter lives in `configs/default.yaml`; any of them can be overridden on the command line as
 `section.key=value` without touching code. Experiment groups (named sets of overrides × seeds) are in `configs/experiments.yaml`.
@@ -114,7 +114,8 @@ Each step's script documents its exact command in its first lines.
 The fine-tuned PrimeSim weights and the kinematics networks are in the Hugging Face repository under `checkpoints/primesim/`
 (copy them to `<primesim src>/models/<name>/` and next to the PrimeSim data folder). The rollout videos of the released
 model, three seeds and three tasks each, are in `reports/world_model_primesim/policy_headline_full_*`;
-`python scripts/ps_report.py` tabulates them into `reports/results/world_model_policy.md`.
+`python scripts/ps_report.py` tabulates them into `reports/results/world_model_policy.md`. All 36 can be watched side by side on the
+[rollout videos page](https://josyulakp.github.io/sharpadex-force-policy/rollouts/).
 
 ## Other tools
 
@@ -127,7 +128,8 @@ model, three seeds and three tasks each, are in `reports/world_model_primesim/po
 | Hosted vision-language judge of task progress | `python scripts/rl_judge_api.py dry_run=true` (key in `OPENAI_API_KEY` or the untracked file `.openai_key`) |
 
 The HTML explainer pages (expert mixture, model anatomy, flow-matching diagnosis) are on the `gh-pages` branch. They were
-written before the 50k-step runs and describe the two-expert model as the main one.
+written before the 50k-step runs and describe the two-expert model as the main one. The rollout videos page on the same
+branch shows the released four-expert model.
 
 ## Layout
 
