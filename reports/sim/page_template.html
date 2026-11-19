@@ -1,0 +1,191 @@
+<title>Eraser Simulator Replays</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* layout: one column; verdict table first, then a bench view: the real recording above three simulated runs on one clock, traces below */
+:root{
+  --bg:#f7f8f8; --surface:#fcfcfb; --ink:#0f1413; --ink2:#4c5553; --ink3:#7b8482; --rule:#dfe3e2; --band:#e9eeec;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --ok:#14744f; --okbg:#dcf1e7; --bad:#a1361c; --badbg:#f8e1d9;
+  --sans:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121514; --surface:#1a1d1c; --ink:#eef1f0; --ink2:#bcc4c1; --ink3:#8a9390; --rule:#2e3432; --band:#252b29;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --ok:#7fd6ae; --okbg:#173327; --bad:#f0a48e; --badbg:#3d1f17; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121514; --surface:#1a1d1c; --ink:#eef1f0; --ink2:#bcc4c1; --ink3:#8a9390; --rule:#2e3432; --band:#252b29;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --ok:#7fd6ae; --okbg:#173327; --bad:#f0a48e; --badbg:#3d1f17; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+h1{font-size:28px;font-weight:600;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:18px;font-weight:600;margin:0;text-wrap:balance}
+p{margin:0;max-width:68ch;color:var(--ink2)}
+.lede{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+.verdict{border-left:3px solid var(--ink);padding:2px 0 2px 14px;display:flex;flex-direction:column;gap:6px}
+.verdict p{color:var(--ink)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tabs button{font:500 13px var(--sans);padding:7px 12px;border:1px solid var(--rule);background:var(--surface);color:var(--ink2);border-radius:4px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tabs button:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.player{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:14px;min-width:0}
+video{width:100%;max-width:100%;background:#000;border-radius:3px;display:block}
+#vid{aspect-ratio:3/1}
+.camlabels{display:grid;grid-template-columns:repeat(3,1fr);font-family:var(--mono);font-size:11px;color:var(--ink3);text-align:center;margin-top:-8px}
+.sims{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.sims{grid-template-columns:1fr}}
+.sim{display:flex;flex-direction:column;gap:6px;min-width:0}
+.sim video{aspect-ratio:4/3}
+.sim h3{font-size:13px;font-weight:600;margin:0;display:flex;align-items:center;gap:7px}
+.sim h3 i{display:inline-block;width:14px;border-top:3px solid}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font:500 12px var(--mono);padding:2px 7px;border-radius:3px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.pill.ok{background:var(--okbg);color:var(--ok)} .pill.bad{background:var(--badbg);color:var(--bad)}
+.kv{font:12px var(--mono);color:var(--ink3);font-variant-numeric:tabular-nums}
+.uid{font-family:var(--mono);font-size:11px;color:var(--ink3);overflow-wrap:anywhere}
+.chart{display:flex;flex-direction:column;gap:4px;min-width:0;position:relative}
+.chead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.chead h3{font-size:13px;font-weight:600;margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--ink2)}
+.legend i{display:inline-block;width:14px;height:0;border-top:2px solid;vertical-align:middle;margin-right:5px}
+.legend i.dash{border-top-style:dashed}
+svg{display:block;width:100%;cursor:crosshair;touch-action:pan-y}
+svg text{font:11px var(--mono);fill:var(--ink3)}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font:11px var(--mono);padding:5px 7px;border-radius:3px;white-space:nowrap;z-index:2}
+.note{font-size:13px;color:var(--ink3)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;font-size:13px;width:100%;min-width:640px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--rule);text-align:left;white-space:nowrap}
+th{font-weight:500;color:var(--ink3);font-size:12px}
+th.grp{color:var(--ink);font-weight:600;border-bottom:0;padding-bottom:0}
+section{display:flex;flex-direction:column;gap:12px;min-width:0}
+ul{margin:0;padding-left:18px;color:var(--ink2);max-width:68ch;display:flex;flex-direction:column;gap:6px}
+</style>
+<div class="wrap">
+  <div class="lede">
+    <div class="eyebrow">SharpaDex · clean_plate_with_eraser · MuJoCo replay</div>
+    <h1>The same commands, replayed on a simulated Sharpa robot</h1>
+    <p>Four recorded episodes. For each, three command streams drive a simulated D01 robot through a scene rebuilt from the recording's cameras: the operator's commands, the commands of the model with force, and the commands of the model without force. The models predicted their commands from the real recorded cameras, joints and forces; they never see the simulation.</p>
+    <div class="verdict">
+      <p><b>Use this for the eraser, not the plate.</b> The eraser is picked up in all 12 runs. The plate is lifted by the operator's own commands in only 2 of 4 episodes, so a model failing on the plate says nothing about the model.</p>
+    </div>
+  </div>
+
+  <section>
+    <h2>Outcome of every run</h2>
+    <p>Highest point each object reaches above where it started. An object counts as lifted above <span id="lift"></span> cm.</p>
+    <div class="tw"><table id="t_out"></table></div>
+  </section>
+
+  <section>
+    <h2>Watch one episode</h2>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="player">
+      <video id="vid" controls muted playsinline preload="metadata"></video>
+      <div class="camlabels"><span>real: head</span><span>real: left wrist</span><span>real: right wrist</span></div>
+      <div class="sims" id="sims"></div>
+      <div class="note">The top video is the real recording and controls playback; the three simulated runs follow it.</div>
+      <div class="uid" id="uid"></div>
+      <div id="charts" style="display:flex;flex-direction:column;gap:18px"></div>
+      <div class="note">Shaded spans are frames where the real robot was in contact (any fingertip above 1 N). Hover a trace for values; click to move the videos there.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What this simulator can and cannot show</h2>
+    <ul>
+      <li>It replays commands; it is not closed-loop. A model's commands were computed from real observations, so the simulation shows whether those commands are physically plausible, not whether the model could finish the task on its own.</li>
+      <li>The hands are pulled to their commanded poses and the arms follow passively. The public arm model does not reproduce the dataset's arm joint angles (3 to 5 cm off at the hand), so the arms are not driven joint by joint. The hands lag their commanded pose by about 17 mm on average.</li>
+      <li>The plate and eraser are simple shapes sized from the cameras and from where the fingers first close. Pinching a thin plate off a table is sensitive to that shape, which is why it fails with the operator's own commands in half the episodes.</li>
+      <li>Simulated fingertip forces run 1.2 to 2 times the real ones in three of the four episodes. Compare their timing with the real trace, not their size.</li>
+      <li>Wiping is counted when the eraser presses on the plate with more than 1 N. It depends on the plate being held, so it is only meaningful in runs where the plate was lifted.</li>
+    </ul>
+  </section>
+</div>
+<script>
+const D = /*DATA*/null;
+const $ = s => document.querySelector(s), NS = "http://www.w3.org/2000/svg";
+const el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); p && p.appendChild(e); return e; };
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const STREAMS = ["recorded", "full", "no_force"];
+const LAB = {recorded: "Operator's commands", full: "Model with force", no_force: "Model without force"};
+const COL = {recorded: "--ink", full: "--s1", no_force: "--s2"};
+let ep, charts = [], sims = [];
+const vid = $("#vid");
+$("#lift").textContent = D.lift_cm;
+const pill = (ok, name, cm) => `<span class="pill ${ok ? "ok" : "bad"}">${ok ? "✓" : "✗"} ${name} ${cm.toFixed(1)} cm</span>`;
+const short = e => e.label[0].toUpperCase() + e.label.slice(1);
+
+$("#t_out").innerHTML = `<tr><th></th>${STREAMS.map(s => `<th class="grp">${LAB[s]}</th>`).join("")}</tr><tr><th>Episode</th>${STREAMS.map(() => "<th>plate · eraser</th>").join("")}</tr>` +
+  D.episodes.map(e => `<tr><td>${short(e)}</td>${STREAMS.map(s => { const r = e.score[s]; return `<td><span class="pills">${pill(r.plate_lifted, "plate", r.plate_max_lift_cm)}${pill(r.eraser_lifted, "eraser", r.eraser_max_lift_cm)}</span></td>`; }).join("")}</tr>`).join("");
+
+function ticks(lo, hi, n = 4) { const st = Math.pow(10, Math.floor(Math.log10((hi - lo) / n))); const m = [1, 2, 5, 10].find(m => (hi - lo) / (st * m) <= n) * st; const t = []; for (let v = Math.ceil(lo / m) * m; v <= hi + 1e-9; v += m) t.push(+v.toFixed(6)); return t; }
+function runs(a) { const r = []; let s = 0; for (let i = 1; i <= a.length; i++) if (i === a.length || a[i] !== a[s]) { r.push([s, i, a[s]]); s = i; } return r; }
+
+function makeChart(host, o) {
+  const box = document.createElement("div"); box.className = "chart"; host.appendChild(box);
+  const head = document.createElement("div"); head.className = "chead"; box.appendChild(head);
+  const h3 = document.createElement("h3"); h3.textContent = o.title; head.appendChild(h3);
+  const lg = document.createElement("div"); lg.className = "legend"; head.appendChild(lg);
+  o.series.forEach(s => { const sp = document.createElement("span"); sp.innerHTML = `<i class="${s.dash ? "dash" : ""}" style="border-color:var(${s.color})"></i>`; sp.append(s.name); lg.appendChild(sp); });
+  const svg = el("svg"); box.appendChild(svg);
+  const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; box.appendChild(tip);
+  const c = {o, svg, tip, box};
+  c.draw = () => {
+    const W = Math.max(280, box.clientWidth), H = o.height || 140, ml = 46, mr = 10, mt = 6, mb = 20, T = ep.frames;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H); svg.innerHTML = "";
+    const x = i => ml + i / (T - 1) * (W - ml - mr);
+    c.x = x; c.inv = px => Math.max(0, Math.min(T - 1, Math.round((px - ml) / (W - ml - mr) * (T - 1))));
+    runs(ep.contact).forEach(([a, b, v]) => v && el("rect", {x: x(a), y: mt, width: Math.max(1, x(b - 1) - x(a)), height: H - mt - mb, fill: css("--band")}, svg));
+    ticks(0, T / ep.fps, W < 500 ? 4 : 8).forEach(s => { el("text", {x: x(s * ep.fps), y: H - 5, "text-anchor": "middle"}, svg).textContent = s + " s"; });
+    let lo = 0, hi = -Infinity; o.series.forEach(s => s.data.forEach(v => { if (v < lo) lo = v; if (v > hi) hi = v; }));
+    if (o.hline != null) hi = Math.max(hi, o.hline * 1.5); if (hi - lo < 1e-6) hi = lo + 1; hi += (hi - lo) * .06;
+    const y = v => mt + (hi - v) / (hi - lo) * (H - mt - mb);
+    ticks(lo, hi).forEach(v => { el("line", {x1: ml, x2: W - mr, y1: y(v), y2: y(v), stroke: css("--rule"), "stroke-width": 1}, svg); el("text", {x: ml - 6, y: y(v) + 4, "text-anchor": "end"}, svg).textContent = v; });
+    if (o.hline != null) el("line", {x1: ml, x2: W - mr, y1: y(o.hline), y2: y(o.hline), stroke: css("--ink3"), "stroke-dasharray": "3 3"}, svg);
+    o.series.forEach(s => { const a = {d: s.data.map((v, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1)).join(""), fill: "none", stroke: css(s.color), "stroke-width": s.w || 2, "stroke-linejoin": "round"}; if (s.dash) a["stroke-dasharray"] = "5 3"; el("path", a, svg); });
+    c.cur = el("line", {y1: mt, y2: H - mb, stroke: css("--ink"), "stroke-width": 1.5}, svg);
+    c.hov = el("line", {y1: mt, y2: H - mb, stroke: css("--ink3"), "stroke-width": 1, "stroke-dasharray": "2 2", visibility: "hidden"}, svg);
+    setCursor();
+  };
+  const at = e => c.inv(e.clientX - svg.getBoundingClientRect().left);
+  svg.addEventListener("pointermove", e => { const i = at(e);
+    charts.forEach(k => { k.hov.setAttribute("x1", k.x(i)); k.hov.setAttribute("x2", k.x(i)); k.hov.setAttribute("visibility", "visible"); });
+    tip.innerHTML = `${(i / ep.fps).toFixed(2)} s · real robot ${ep.contact[i] ? "in contact" : "free"}<br>` + o.series.map(s => `${s.name}: ${s.data[i].toFixed(1)} ${o.unit}`).join("<br>"); tip.hidden = false;
+    const bx = box.getBoundingClientRect(), px = e.clientX - bx.left; tip.style.top = (svg.getBoundingClientRect().top - bx.top + 4) + "px";
+    tip.style.left = Math.min(bx.width - tip.offsetWidth - 2, Math.max(0, px + (px > bx.width / 2 ? -tip.offsetWidth - 10 : 10))) + "px"; });
+  svg.addEventListener("pointerleave", () => { tip.hidden = true; charts.forEach(k => k.hov.setAttribute("visibility", "hidden")); });
+  svg.addEventListener("click", e => { vid.currentTime = at(e) / ep.fps; follow(true); setCursor(); });
+  charts.push(c); return c;
+}
+function setCursor() { if (!ep) return; const i = Math.min(ep.frames - 1, vid.currentTime * ep.fps || 0); charts.forEach(c => { if (c.cur) { c.cur.setAttribute("x1", c.x(i)); c.cur.setAttribute("x2", c.x(i)); } }); }
+function follow(force) { sims.forEach(v => { if (force || Math.abs(v.currentTime - vid.currentTime) > .2) { try { v.currentTime = vid.currentTime; } catch (e) {} } }); }
+(function loop() { setCursor(); if (!vid.paused) follow(false); requestAnimationFrame(loop); })();
+vid.addEventListener("play", () => { follow(true); sims.forEach(v => v.play().catch(() => {})); });
+vid.addEventListener("pause", () => { sims.forEach(v => v.pause()); follow(true); });
+vid.addEventListener("seeked", () => follow(true));
+vid.addEventListener("ratechange", () => sims.forEach(v => v.playbackRate = vid.playbackRate));
+
+function show(k) {
+  ep = D.episodes[k];
+  [...$("#tabs").children].forEach((b, i) => b.setAttribute("aria-selected", i === k));
+  vid.src = ep.real; vid.load();
+  $("#sims").innerHTML = STREAMS.map(s => { const r = ep.score[s];
+    return `<div class="sim"><h3><i style="border-color:var(${COL[s]})"></i>${LAB[s]}</h3><video muted playsinline preload="metadata" src="${ep.video[s]}" aria-label="Simulation, ${LAB[s]}"></video>` +
+      `<div class="pills">${pill(r.plate_lifted, "plate", r.plate_max_lift_cm)}${pill(r.eraser_lifted, "eraser", r.eraser_max_lift_cm)}</div>` +
+      `<div class="kv">wipe ${r.wipe_s.toFixed(1)} s over ${r.wipe_path_cm.toFixed(0)} cm<br>contact force ${r.mean_contact_force_sim_n.toFixed(0)} N sim · ${r.mean_contact_force_real_n.toFixed(0)} N real<br>hand tracking ${r.hand_base_tracking_mm.toFixed(0)} mm</div></div>`; }).join("");
+  sims = [...document.querySelectorAll("#sims video")];
+  const o = ep.objects;
+  $("#uid").textContent = `${ep.uid} · ${ep.frames} frames · ${(ep.frames / ep.fps).toFixed(1)} s · plate radius ${(o.plate_radius * 100).toFixed(1)} cm, rim ${((o.plate_top_z - o.table_z) * 100).toFixed(1)} cm above the table · model seed ${D.seed}`;
+  const host = $("#charts"); host.innerHTML = ""; charts = [];
+  const three = key => STREAMS.map(s => ({name: LAB[s], color: COL[s], data: ep[key][s], w: s === "recorded" ? 1.5 : 2}));
+  makeChart(host, {title: "Eraser height above its start (cm)", unit: "cm", hline: D.lift_cm, series: three("eraser")});
+  makeChart(host, {title: "Plate height above its start (cm)", unit: "cm", hline: D.lift_cm, series: three("plate")});
+  makeChart(host, {title: "Largest fingertip force (N)", unit: "N", height: 170, series: [{name: "real, measured", color: "--ink3", data: ep.force_real, dash: true, w: 1.5}, {name: "real, forecast by the model with force", color: "--s3", data: ep.force_forecast, w: 1.5}, ...three("force")]});
+  charts.forEach(c => c.draw());
+}
+D.episodes.forEach((e, k) => { const b = document.createElement("button"); b.role = "tab"; b.id = "tab" + k; b.textContent = short(e); b.onclick = () => show(k); $("#tabs").appendChild(b); });
+show(2);
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => charts.forEach(c => c.draw()), 120); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => charts.forEach(c => c.draw()));
+new MutationObserver(() => charts.forEach(c => c.draw())).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+</script>

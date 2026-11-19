@@ -1,0 +1,181 @@
+/opt/pytorch/lib/python3.12/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+seed2: 1032 train episodes, 465256 frames (4.31 h), 6.88 M params
+  step     0 loss 3.0223 action 2.2060 force 1.0714 decision 3.5456  1s
+  step   200 loss 1.4801 action 1.2966 force 0.9153 decision 0.4601  30s
+  step   400 loss 0.7513 action 0.6174 force 0.5246 decision 0.4070  58s
+  step   600 loss 0.6040 action 0.5127 force 0.2566 decision 0.3281  87s
+  step   800 loss 0.4649 action 0.3888 force 0.2098 decision 0.2757  115s
+  step  1000 loss 0.4192 action 0.3376 force 0.1599 decision 0.3284  144s
+  step  1200 loss 0.3846 action 0.3207 force 0.1524 decision 0.2431  171s
+  step  1400 loss 0.3567 action 0.2939 force 0.1249 decision 0.2518  199s
+  step  1600 loss 0.3322 action 0.2761 force 0.1246 decision 0.2180  227s
+  step  1800 loss 0.3180 action 0.2521 force 0.1093 decision 0.2746  255s
+  step  2000 loss 0.3055 action 0.2411 force 0.1184 decision 0.2626  283s
+  step  2200 loss 0.2856 action 0.2254 force 0.1009 decision 0.2507  312s
+  step  2400 loss 0.2924 action 0.2345 force 0.1076 decision 0.2357  340s
+  step  2600 loss 0.3034 action 0.2319 force 0.1012 decision 0.3068  368s
+  step  2800 loss 0.3367 action 0.2401 force 0.1175 decision 0.4241  392s
+  step  3000 loss 0.2516 action 0.2007 force 0.0874 decision 0.2107  411s
+  step  3200 loss 0.2995 action 0.2479 force 0.1000 decision 0.2078  430s
+  step  3400 loss 0.2447 action 0.1897 force 0.0729 decision 0.2386  449s
+  step  3600 loss 0.2290 action 0.1833 force 0.0797 decision 0.1885  468s
+  step  3800 loss 0.2384 action 0.1891 force 0.0855 decision 0.2036  487s
+  step  4000 loss 0.2613 action 0.2139 force 0.0945 decision 0.1896  506s
+  step  4200 loss 0.2493 action 0.2010 force 0.0937 decision 0.1947  525s
+  step  4400 loss 0.2480 action 0.1914 force 0.0881 decision 0.2390  544s
+  step  4600 loss 0.2210 action 0.1727 force 0.0647 decision 0.2092  563s
+  step  4800 loss 0.2294 action 0.1914 force 0.0852 decision 0.1475  583s
+  step  5000 loss 0.2434 action 0.1902 force 0.0740 decision 0.2291  602s
+  step  5200 loss 0.2467 action 0.1989 force 0.0916 decision 0.1934  621s
+  step  5400 loss 0.2075 action 0.1720 force 0.0760 decision 0.1396  640s
+  step  5600 loss 0.2252 action 0.1719 force 0.0749 decision 0.2289  659s
+  step  5800 loss 0.2280 action 0.1879 force 0.0640 decision 0.1685  678s
+  step  6000 loss 0.2194 action 0.1899 force 0.0757 decision 0.1096  697s
+  step  6200 loss 0.1952 action 0.1633 force 0.0611 decision 0.1293  716s
+  step  6400 loss 0.2110 action 0.1676 force 0.0717 decision 0.1809  736s
+  step  6600 loss 0.2192 action 0.1802 force 0.0792 decision 0.1554  754s
+  step  6800 loss 0.2128 action 0.1748 force 0.0729 decision 0.1531  774s
+  step  7000 loss 0.1845 action 0.1428 force 0.0602 decision 0.1782  793s
+  step  7200 loss 0.2192 action 0.1796 force 0.0789 decision 0.1585  812s
+  step  7400 loss 0.2002 action 0.1554 force 0.0654 decision 0.1911  831s
+  step  7600 loss 0.1849 action 0.1534 force 0.0627 decision 0.1262  850s
+  step  7800 loss 0.1984 action 0.1612 force 0.0735 decision 0.1493  869s
+  step  8000 loss 0.2064 action 0.1683 force 0.0718 decision 0.1547  889s
+  step  8200 loss 0.1979 action 0.1508 force 0.0810 decision 0.1951  908s
+  step  8400 loss 0.1804 action 0.1516 force 0.0592 decision 0.1143  927s
+  step  8600 loss 0.2066 action 0.1688 force 0.0788 decision 0.1495  946s
+  step  8800 loss 0.1925 action 0.1509 force 0.0636 decision 0.1761  965s
+  step  9000 loss 0.1749 action 0.1389 force 0.0663 decision 0.1468  984s
+  step  9200 loss 0.1839 action 0.1502 force 0.0498 decision 0.1440  1003s
+  step  9400 loss 0.1840 action 0.1448 force 0.0564 decision 0.1679  1023s
+  step  9600 loss 0.1859 action 0.1432 force 0.0623 decision 0.1823  1042s
+  step  9800 loss 0.1815 action 0.1412 force 0.0715 decision 0.1656  1061s
+  step 10000 loss 0.1968 action 0.1616 force 0.0597 decision 0.1459  1080s
+  step 10200 loss 0.1747 action 0.1470 force 0.0669 decision 0.1051  1099s
+  step 10400 loss 0.1651 action 0.1312 force 0.0579 decision 0.1402  1118s
+  step 10600 loss 0.1744 action 0.1411 force 0.0622 decision 0.1354  1137s
+  step 10800 loss 0.1594 action 0.1308 force 0.0589 decision 0.1135  1157s
+  step 11000 loss 0.1608 action 0.1331 force 0.0566 decision 0.1099  1176s
+  step 11200 loss 0.1564 action 0.1356 force 0.0539 decision 0.0769  1195s
+  step 11400 loss 0.1740 action 0.1468 force 0.0734 decision 0.0991  1214s
+  step 11600 loss 0.1513 action 0.1250 force 0.0559 decision 0.1036  1233s
+  step 11800 loss 0.1666 action 0.1383 force 0.0611 decision 0.1111  1252s
+  step 12000 loss 0.1455 action 0.1236 force 0.0571 decision 0.0809  1271s
+  step 12200 loss 0.1356 action 0.1115 force 0.0473 decision 0.0971  1291s
+  step 12400 loss 0.1505 action 0.1189 force 0.0481 decision 0.1343  1310s
+  step 12600 loss 0.1622 action 0.1334 force 0.0570 decision 0.1156  1329s
+  step 12800 loss 0.1776 action 0.1489 force 0.0914 decision 0.0981  1348s
+  step 13000 loss 0.1432 action 0.1224 force 0.0420 decision 0.0828  1367s
+  step 13200 loss 0.1348 action 0.1112 force 0.0469 decision 0.0945  1386s
+  step 13400 loss 0.1502 action 0.1301 force 0.0625 decision 0.0695  1406s
+  step 13600 loss 0.1463 action 0.1219 force 0.0561 decision 0.0940  1425s
+  step 13800 loss 0.1609 action 0.1350 force 0.0639 decision 0.0975  1444s
+  step 14000 loss 0.1567 action 0.1345 force 0.0555 decision 0.0837  1463s
+  step 14200 loss 0.1724 action 0.1461 force 0.0513 decision 0.1059  1482s
+  step 14400 loss 0.1235 action 0.0994 force 0.0430 decision 0.0992  1501s
+  step 14600 loss 0.1398 action 0.1150 force 0.0553 decision 0.0965  1520s
+  step 14800 loss 0.1613 action 0.1345 force 0.0683 decision 0.1001  1539s
+  step 15000 loss 0.1443 action 0.1210 force 0.0609 decision 0.0859  1559s
+  step 15200 loss 0.1538 action 0.1301 force 0.0588 decision 0.0892  1578s
+  step 15400 loss 0.1422 action 0.1195 force 0.0540 decision 0.0868  1597s
+  step 15600 loss 0.1117 action 0.0944 force 0.0407 decision 0.0660  1616s
+  step 15800 loss 0.1216 action 0.1018 force 0.0393 decision 0.0797  1635s
+  step 16000 loss 0.1381 action 0.1086 force 0.0480 decision 0.1235  1654s
+  step 16200 loss 0.1603 action 0.1321 force 0.0566 decision 0.1129  1674s
+  step 16400 loss 0.1484 action 0.1254 force 0.0598 decision 0.0849  1693s
+  step 16600 loss 0.1221 action 0.1068 force 0.0438 decision 0.0547  1712s
+  step 16800 loss 0.1372 action 0.1169 force 0.0463 decision 0.0781  1731s
+  step 17000 loss 0.1419 action 0.1138 force 0.0481 decision 0.1167  1750s
+  step 17200 loss 0.1341 action 0.1129 force 0.0572 decision 0.0774  1769s
+  step 17400 loss 0.1264 action 0.1068 force 0.0502 decision 0.0729  1787s
+  step 17600 loss 0.1613 action 0.1425 force 0.0657 decision 0.0610  1806s
+  step 17800 loss 0.1610 action 0.1406 force 0.0650 decision 0.0697  1825s
+  step 18000 loss 0.1270 action 0.1121 force 0.0501 decision 0.0496  1843s
+  step 18200 loss 0.1236 action 0.1084 force 0.0501 decision 0.0506  1862s
+  step 18400 loss 0.1255 action 0.1078 force 0.0562 decision 0.0607  1881s
+  step 18600 loss 0.1257 action 0.1043 force 0.0509 decision 0.0817  1899s
+  step 18800 loss 0.1261 action 0.1110 force 0.0537 decision 0.0484  1918s
+  step 19000 loss 0.1174 action 0.1005 force 0.0439 decision 0.0625  1937s
+  step 19200 loss 0.1237 action 0.1070 force 0.0513 decision 0.0579  1955s
+  step 19400 loss 0.1369 action 0.1144 force 0.0568 decision 0.0845  1974s
+  step 19600 loss 0.1349 action 0.1163 force 0.0600 decision 0.0628  1993s
+  step 19800 loss 0.1349 action 0.1122 force 0.0513 decision 0.0877  2012s
+  step 20000 loss 0.1100 action 0.0937 force 0.0326 decision 0.0651  2030s
+  step 20200 loss 0.1294 action 0.1068 force 0.0534 decision 0.0862  2049s
+  step 20400 loss 0.1150 action 0.1001 force 0.0420 decision 0.0535  2068s
+  step 20600 loss 0.1328 action 0.1185 force 0.0613 decision 0.0407  2086s
+  step 20800 loss 0.1314 action 0.1111 force 0.0494 decision 0.0765  2105s
+  step 21000 loss 0.1426 action 0.1228 force 0.0551 decision 0.0717  2124s
+  step 21200 loss 0.1190 action 0.0985 force 0.0500 decision 0.0775  2143s
+  step 21400 loss 0.1174 action 0.1035 force 0.0492 decision 0.0448  2161s
+  step 21600 loss 0.1397 action 0.1219 force 0.0593 decision 0.0597  2180s
+  step 21800 loss 0.1234 action 0.1059 force 0.0489 decision 0.0628  2199s
+  step 22000 loss 0.1136 action 0.0975 force 0.0449 decision 0.0578  2218s
+  step 22200 loss 0.1214 action 0.1083 force 0.0465 decision 0.0425  2236s
+  step 22400 loss 0.1205 action 0.1048 force 0.0494 decision 0.0536  2255s
+  step 22600 loss 0.1417 action 0.1201 force 0.0584 decision 0.0787  2274s
+  step 22800 loss 0.1119 action 0.0958 force 0.0388 decision 0.0607  2293s
+  step 23000 loss 0.1244 action 0.1090 force 0.0507 decision 0.0515  2311s
+  step 23200 loss 0.1210 action 0.1011 force 0.0423 decision 0.0783  2330s
+  step 23400 loss 0.1162 action 0.1024 force 0.0524 decision 0.0425  2349s
+  step 23600 loss 0.1131 action 0.0937 force 0.0541 decision 0.0700  2367s
+  step 23800 loss 0.1506 action 0.1274 force 0.0622 decision 0.0849  2386s
+  step 24000 loss 0.1072 action 0.0927 force 0.0393 decision 0.0527  2405s
+  step 24200 loss 0.1263 action 0.1147 force 0.0456 decision 0.0353  2424s
+  step 24400 loss 0.1289 action 0.1108 force 0.0522 decision 0.0641  2443s
+  step 24600 loss 0.1182 action 0.0972 force 0.0434 decision 0.0836  2461s
+  step 24800 loss 0.1252 action 0.1030 force 0.0468 decision 0.0878  2480s
+  step 24999 loss 0.1263 action 0.1141 force 0.0474 decision 0.0371  2499s
+/opt/pytorch/lib/python3.12/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+{
+ "frames": 51258,
+ "contact_frames": 27778,
+ "episodes": 115,
+ "train_hours": 4.307925925925926,
+ "force_output": true,
+ "decision_supervision": true,
+ "act": {
+  "all": 0.018384713679552078,
+  "contact": 0.016933823004364967,
+  "free": 0.020101187750697136
+ },
+ "act_arm": {
+  "all": 0.014282447285950184,
+  "contact": 0.014604789204895496,
+  "free": 0.01390109769999981
+ },
+ "act_hand": {
+  "all": 0.019689982756972313,
+  "contact": 0.01767488196492195,
+  "free": 0.022073941305279732
+ },
+ "act_first": {
+  "all": 0.011109769344329834,
+  "contact": 0.010561235249042511,
+  "free": 0.01175871305167675
+ },
+ "act_hold": {
+  "all": 0.046720486134290695,
+  "contact": 0.035629816353321075,
+  "free": 0.059841301292181015
+ },
+ "force": {
+  "all": 0.509652316570282,
+  "contact": 0.6233266592025757,
+  "free": 0.37516987323760986
+ },
+ "force_persist": {
+  "all": 0.24216388165950775,
+  "contact": 0.41487449407577515,
+  "free": 0.0378386564552784
+ },
+ "contact_soon_acc": 0.9739552850286785,
+ "phase_acc": 0.9497249126434326,
+ "level_mae": 0.10310585796833038,
+ "gate0_contact_vs_free": [
+  0.8165323734283447,
+  0.5849735140800476
+ ]
+}

@@ -1,0 +1,12 @@
+{
+ "recorded__real": {
+  "frames": 145,
+  "mean_abs_error_grey": 29.637813568115234,
+  "psnr_db": 15.991665840148926
+ },
+ "recorded__generated": {
+  "frames": 145,
+  "mean_abs_error_grey": 93.67310333251953,
+  "psnr_db": 7.572467803955078
+ }
+}

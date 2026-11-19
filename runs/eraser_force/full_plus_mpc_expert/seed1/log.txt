@@ -1,0 +1,136 @@
+/opt/pytorch/lib/python3.12/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+seed1: 309 train episodes, 171388 frames (1.59 h), 6.86 M params
+  step     0 loss 2.2454 action 0.5503 force 0.2684 decision 3.0243 mpc_u 0.5988 mpc_force 0.3992  1s
+  step   200 loss 0.9795 action 0.4256 force 0.1264 decision 0.3627 mpc_u 0.2745 mpc_force 0.2708  16s
+  step   400 loss 0.6412 action 0.3081 force 0.0917 decision 0.3263 mpc_u 0.1566 mpc_force 0.1196  32s
+  step   600 loss 0.5426 action 0.2703 force 0.0656 decision 0.3529 mpc_u 0.1311 mpc_force 0.0735  48s
+  step   800 loss 0.4806 action 0.2561 force 0.0635 decision 0.2445 mpc_u 0.1132 mpc_force 0.0583  64s
+  step  1000 loss 0.4616 action 0.2309 force 0.0665 decision 0.2828 mpc_u 0.1111 mpc_force 0.0547  80s
+  step  1200 loss 0.4497 action 0.2275 force 0.0554 decision 0.2654 mpc_u 0.1105 mpc_force 0.0559  96s
+  step  1400 loss 0.4405 action 0.2366 force 0.0564 decision 0.2263 mpc_u 0.1052 mpc_force 0.0488  112s
+  step  1600 loss 0.4261 action 0.2209 force 0.0504 decision 0.2560 mpc_u 0.0994 mpc_force 0.0536  128s
+  step  1800 loss 0.3973 action 0.2190 force 0.0480 decision 0.2090 mpc_u 0.0895 mpc_force 0.0454  144s
+  step  2000 loss 0.3929 action 0.2124 force 0.0488 decision 0.2293 mpc_u 0.0907 mpc_force 0.0379  160s
+  step  2200 loss 0.3790 action 0.2074 force 0.0433 decision 0.2328 mpc_u 0.0806 mpc_force 0.0444  176s
+  step  2400 loss 0.3736 action 0.2083 force 0.0458 decision 0.1889 mpc_u 0.0840 mpc_force 0.0396  192s
+  step  2600 loss 0.3600 action 0.1942 force 0.0469 decision 0.2037 mpc_u 0.0795 mpc_force 0.0395  208s
+  step  2800 loss 0.3397 action 0.1834 force 0.0457 decision 0.1783 mpc_u 0.0754 mpc_force 0.0396  224s
+  step  3000 loss 0.3407 action 0.1926 force 0.0499 decision 0.1415 mpc_u 0.0752 mpc_force 0.0383  240s
+  step  3200 loss 0.3384 action 0.1791 force 0.0463 decision 0.1518 mpc_u 0.0811 mpc_force 0.0381  256s
+  step  3400 loss 0.3226 action 0.1786 force 0.0427 decision 0.1769 mpc_u 0.0677 mpc_force 0.0336  272s
+  step  3600 loss 0.3262 action 0.1861 force 0.0385 decision 0.2260 mpc_u 0.0578 mpc_force 0.0337  288s
+  step  3800 loss 0.3073 action 0.1722 force 0.0402 decision 0.1587 mpc_u 0.0658 mpc_force 0.0319  303s
+  step  4000 loss 0.3326 action 0.1795 force 0.0381 decision 0.1917 mpc_u 0.0760 mpc_force 0.0353  319s
+  step  4200 loss 0.3124 action 0.1813 force 0.0397 decision 0.1389 mpc_u 0.0646 mpc_force 0.0319  335s
+  step  4400 loss 0.2797 action 0.1627 force 0.0372 decision 0.1460 mpc_u 0.0540 mpc_force 0.0302  351s
+  step  4600 loss 0.2838 action 0.1604 force 0.0398 decision 0.1371 mpc_u 0.0592 mpc_force 0.0279  367s
+  step  4800 loss 0.2995 action 0.1736 force 0.0404 decision 0.1518 mpc_u 0.0593 mpc_force 0.0306  383s
+  step  5000 loss 0.2902 action 0.1633 force 0.0360 decision 0.1644 mpc_u 0.0595 mpc_force 0.0321  399s
+  step  5200 loss 0.2873 action 0.1621 force 0.0350 decision 0.1415 mpc_u 0.0622 mpc_force 0.0295  415s
+  step  5400 loss 0.2853 action 0.1604 force 0.0356 decision 0.1369 mpc_u 0.0643 mpc_force 0.0303  431s
+  step  5600 loss 0.2761 action 0.1582 force 0.0390 decision 0.1527 mpc_u 0.0527 mpc_force 0.0290  447s
+  step  5800 loss 0.2736 action 0.1534 force 0.0349 decision 0.1331 mpc_u 0.0594 mpc_force 0.0281  463s
+  step  6000 loss 0.2784 action 0.1514 force 0.0393 decision 0.1322 mpc_u 0.0673 mpc_force 0.0268  479s
+  step  6200 loss 0.2665 action 0.1536 force 0.0385 decision 0.1235 mpc_u 0.0545 mpc_force 0.0286  495s
+  step  6400 loss 0.2813 action 0.1559 force 0.0358 decision 0.1554 mpc_u 0.0612 mpc_force 0.0268  511s
+  step  6600 loss 0.2732 action 0.1504 force 0.0356 decision 0.1584 mpc_u 0.0595 mpc_force 0.0265  527s
+  step  6800 loss 0.2717 action 0.1642 force 0.0334 decision 0.1369 mpc_u 0.0463 mpc_force 0.0260  543s
+  step  7000 loss 0.2479 action 0.1531 force 0.0337 decision 0.1171 mpc_u 0.0426 mpc_force 0.0234  559s
+  step  7200 loss 0.2586 action 0.1486 force 0.0381 decision 0.1324 mpc_u 0.0518 mpc_force 0.0245  574s
+  step  7400 loss 0.2686 action 0.1641 force 0.0361 decision 0.1207 mpc_u 0.0494 mpc_force 0.0256  590s
+  step  7600 loss 0.2665 action 0.1585 force 0.0318 decision 0.1397 mpc_u 0.0462 mpc_force 0.0263  606s
+  step  7800 loss 0.2522 action 0.1471 force 0.0393 decision 0.1095 mpc_u 0.0492 mpc_force 0.0267  622s
+  step  7999 loss 0.2480 action 0.1487 force 0.0325 decision 0.1156 mpc_u 0.0470 mpc_force 0.0258  638s
+/opt/pytorch/lib/python3.12/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+{
+ "heldout_steps": 12000,
+ "heldout_episodes": 30,
+ "contact_steps": 5433,
+ "u_first_n": {
+  "all": 0.058035802096128464,
+  "contact": 0.04557172209024429,
+  "free": 0.06834755837917328
+ },
+ "u_plan_n": {
+  "all": 0.013853360898792744,
+  "contact": 0.011718849651515484,
+  "free": 0.015619280748069286
+ },
+ "force_n": {
+  "all": 0.006093521136790514,
+  "contact": 0.008020240813493729,
+  "free": 0.004499510861933231
+ },
+ "u_zero_baseline_n": 0.23681539297103882,
+ "contact_soon_acc": 0.9985833168029785,
+ "closed_loop": {
+  "teacher": {
+   "ball_err_mm": 10.031836213870243,
+   "ms_per_step": 26.63428645992636,
+   "mean_normal_force_n": 0.6191360524771633
+  },
+  "student": {
+   "ball_err_mm": 9.924767453627764,
+   "ms_per_step": 5.72785011604664,
+   "mean_normal_force_n": 0.6275714777429082
+  },
+  "no_control": {
+   "ball_err_mm": 37.215440462415835,
+   "ms_per_step": 0.04297345144799931,
+   "mean_normal_force_n": 0.0
+  },
+  "episodes": 30
+ }
+}
+{
+ "frames": 19079,
+ "contact_frames": 12724,
+ "episodes": 34,
+ "train_hours": 1.5869259259259259,
+ "force_output": true,
+ "decision_supervision": true,
+ "act": {
+  "all": 0.019260505214333534,
+  "contact": 0.019996581599116325,
+  "free": 0.01778673194348812
+ },
+ "act_arm": {
+  "all": 0.01534047070890665,
+  "contact": 0.016135968267917633,
+  "free": 0.01374771911650896
+ },
+ "act_hand": {
+  "all": 0.02050779014825821,
+  "contact": 0.021224956959486008,
+  "free": 0.019071871414780617
+ },
+ "act_first": {
+  "all": 0.01076457928866148,
+  "contact": 0.011490575969219208,
+  "free": 0.009310985915362835
+ },
+ "act_hold": {
+  "all": 0.049882471561431885,
+  "contact": 0.04796072840690613,
+  "free": 0.05373019725084305
+ },
+ "force": {
+  "all": 0.4753749966621399,
+  "contact": 0.690689742565155,
+  "free": 0.04427119344472885
+ },
+ "force_persist": {
+  "all": 0.4040509760379791,
+  "contact": 0.590991735458374,
+  "free": 0.02975762076675892
+ },
+ "contact_soon_acc": 0.9688138791341265,
+ "phase_acc": 0.9625242352485657,
+ "level_mae": 0.14219823479652405,
+ "gate0_contact_vs_free": [
+  0.27773961424827576,
+  0.4239092171192169
+ ]
+}

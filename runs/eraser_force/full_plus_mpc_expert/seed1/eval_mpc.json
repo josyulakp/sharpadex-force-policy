@@ -1,0 +1,40 @@
+{
+ "heldout_steps": 12000,
+ "heldout_episodes": 30,
+ "contact_steps": 5433,
+ "u_first_n": {
+  "all": 0.058035802096128464,
+  "contact": 0.04557172209024429,
+  "free": 0.06834755837917328
+ },
+ "u_plan_n": {
+  "all": 0.013853360898792744,
+  "contact": 0.011718849651515484,
+  "free": 0.015619280748069286
+ },
+ "force_n": {
+  "all": 0.006093521136790514,
+  "contact": 0.008020240813493729,
+  "free": 0.004499510861933231
+ },
+ "u_zero_baseline_n": 0.23681539297103882,
+ "contact_soon_acc": 0.9985833168029785,
+ "closed_loop": {
+  "teacher": {
+   "ball_err_mm": 10.031836213870243,
+   "ms_per_step": 26.63428645992636,
+   "mean_normal_force_n": 0.6191360524771633
+  },
+  "student": {
+   "ball_err_mm": 9.924767453627764,
+   "ms_per_step": 5.72785011604664,
+   "mean_normal_force_n": 0.6275714777429082
+  },
+  "no_control": {
+   "ball_err_mm": 37.215440462415835,
+   "ms_per_step": 0.04297345144799931,
+   "mean_normal_force_n": 0.0
+  },
+  "episodes": 30
+ }
+}

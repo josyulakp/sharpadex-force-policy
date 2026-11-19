@@ -1,0 +1,4293 @@
+<title>Force Policy Anatomy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* layout: one column; the model drawn top-to-bottom as a signal path, switches beside it, measurements below */
+:root{
+  --bg:#f7f8f8; --surface:#fcfcfb; --ink:#0f1413; --ink2:#4c5553; --ink3:#7b8482; --rule:#dfe3e2; --band:#e9eeec;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --force:#2a78d6; --forcebg:#e6effa;
+  --sans:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121514; --surface:#1a1d1c; --ink:#eef1f0; --ink2:#bcc4c1; --ink3:#8a9390; --rule:#2e3432; --band:#252b29;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --force:#3987e5; --forcebg:#18283d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121514; --surface:#1a1d1c; --ink:#eef1f0; --ink2:#bcc4c1; --ink3:#8a9390; --rule:#2e3432; --band:#252b29;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --force:#3987e5; --forcebg:#18283d; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+h1{font-size:28px;font-weight:600;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:19px;font-weight:600;margin:0;text-wrap:balance}
+h3{font-size:14px;font-weight:600;margin:0}
+p{margin:0;max-width:68ch;color:var(--ink2)}
+section{display:flex;flex-direction:column;gap:14px;min-width:0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+.mono{font-family:var(--mono);font-size:12.5px}
+.grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.flow{display:flex;flex-direction:column;gap:6px}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+.stage{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3);margin-top:6px}
+.arrow{text-align:center;color:var(--ink3);font-size:13px;line-height:1}
+.blk{flex:1 1 104px;min-width:0;text-align:left;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--rule);border-radius:4px;padding:7px 9px;cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.blk b{font-size:13px;font-weight:600}
+.blk span{font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.blk.force{border-color:var(--force);background:var(--forcebg)}
+.blk.wide{flex-basis:100%}
+.blk.off{border-style:dashed;border-color:var(--ink3);background:transparent}
+.blk.off b{color:var(--ink3);text-decoration:line-through}
+.blk[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:1px}
+.blk:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.sw{display:flex;flex-direction:column;gap:8px}
+.sw label{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;cursor:pointer}
+.sw input{margin-top:3px}
+.sw small{display:block;color:var(--ink3);font-size:12px}
+select{font:13px var(--sans);padding:3px 6px;background:var(--surface);color:var(--ink);border:1px solid var(--rule);border-radius:4px;max-width:100%}
+.result{border-top:1px solid var(--rule);padding-top:10px;display:flex;flex-direction:column;gap:6px}
+.nums{display:flex;flex-wrap:wrap;gap:6px 22px}
+.num{display:flex;flex-direction:column}
+.num b{font:500 18px var(--mono);font-variant-numeric:tabular-nums}
+.num span{font-size:12px;color:var(--ink3)}
+.detail{min-height:92px}
+.detail p{font-size:13.5px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px}
+ol,ul{margin:0;padding-left:18px;color:var(--ink2);display:flex;flex-direction:column;gap:6px;font-size:14px}
+.eq{font-family:var(--mono);font-size:12.5px;background:var(--band);border-radius:4px;padding:8px 10px;overflow-x:auto;white-space:nowrap;color:var(--ink)}
+.chead{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--ink2)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+.bars{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 10px;align-items:center;font-size:13px}
+.bars .lab{color:var(--ink2)} .bars .lab small{color:var(--ink3);font-family:var(--mono);font-size:11px}
+.pair{display:flex;flex-direction:column;gap:2px}
+.bar{display:flex;align-items:center;gap:6px;height:12px}
+.bar i{display:block;height:100%;border-radius:0 3px 3px 0;min-width:1px}
+.bar span{font-family:var(--mono);font-size:11px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;font-size:13px;width:100%;min-width:520px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--rule);text-align:left;white-space:nowrap}
+th{font-weight:500;color:var(--ink3);font-size:12px}
+td .g{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-variant-numeric:tabular-nums}
+td .g i{display:block;height:10px;background:var(--s1);border-radius:0 3px 3px 0}
+td .g u{display:block;width:70px;height:10px;background:var(--band);border-radius:3px;text-decoration:none;overflow:hidden}
+.note{font-size:13px;color:var(--ink3);max-width:72ch}
+</style>
+<div class="wrap">
+  <section>
+    <div class="eyebrow">SharpaDex · clean_plate_with_eraser · 6.72 M trainable parameters</div>
+    <h1>A small policy that reads force, predicts force, and decides before it acts</h1>
+    <p>At 30 Hz the model reads three cameras, the last 0.33 s of joint positions, fingertip forces and joint torques, and outputs the next 16 joint targets (0.53 s), the fingertip forces it expects over the same steps, and three short decisions about what comes next. Blue marks every place where force enters.</p>
+  </section>
+
+  <section>
+    <h2>The model, top to bottom</h2>
+    <p>Select a block to see what it does. The switches on the right are the same ones in <span class="mono">configs/default.yaml</span>; flipping them shows what changes in the network and the held-out error of that trained variant.</p>
+    <div class="grid">
+      <div class="panel">
+        <div class="flow" id="flow"></div>
+        <div class="detail" id="detail"></div>
+      </div>
+      <div class="panel">
+        <h3>Force switches</h3>
+        <div class="sw">
+          <label><input type="checkbox" id="sw_tac" checked><span>Fingertip force input<small>10 fingertips × force and torque, 6 past frames</small></span></label>
+          <label for="sw_tor" style="flex-direction:column;gap:3px"><span>Joint torque input<small>58 arm and hand joints, 6 past frames</small></span>
+            <select id="sw_tor"><option value="all">all joints</option><option value="arms">arms only</option><option value="hands">hands only</option><option value="off">off</option></select></label>
+          <label><input type="checkbox" id="sw_out" checked><span>Predict fingertip force<small>extra output and loss next to the action</small></span></label>
+          <label><input type="checkbox" id="sw_res"><span>Force head predicts change from now<small>the residual head</small></span></label>
+          <label><input type="checkbox" id="sw_dec" checked><span>Force-based decision labels<small>contact-soon and force-level slots are trained</small></span></label>
+          <label><input type="checkbox" id="sw_zero"><span>Test time: set force inputs to zero<small>same weights, measured zeros fed in</small></span></label>
+        </div>
+        <div class="result" id="result"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>How it was trained</h2>
+    <p>Everything is trained together from scratch in one run of 8,000 steps (about 15 minutes on one GPU). Only the camera encoder is pretrained and frozen; its outputs are computed once and stored.</p>
+    <div class="eq">loss = 1.0 · |action − target| + 0.5 · |force − target| + 0.2 · (phase + contact-soon + force-level)</div>
+    <ul>
+      <li>Action target: the operator's commanded joint position at each of the next 16 frames, minus the current joint position, divided by that joint's typical step size.</li>
+      <li>Batch 256 random frames, AdamW at 3e-4 with 500 warm-up steps and cosine decay, 16-bit mixed precision, dropout 0.1.</li>
+      <li>Input scaling uses training episodes only. The 10% held-out episodes are never seen.</li>
+    </ul>
+    <div class="cols">
+      <div class="panel">
+        <h3>Mixture of experts (action head)</h3>
+        <ol>
+          <li>Two small networks (256 → 256 → 58 joints each) read the same 16 action slots and each propose a full action chunk.</li>
+          <li>The three decision slots are joined and passed through one linear layer and a softmax. That gives two weights per frame, the same for all 16 steps.</li>
+          <li>The output is the weighted sum of the two proposals.</li>
+          <li>The only training signal is the action loss on that sum. There is no label for which expert to use, no balance penalty and no pretraining of either expert.</li>
+        </ol>
+        <p style="font-size:14px">Because the gate reads the decision slots, and those slots are also trained to predict phase, contact and force level, the gate can split by those. Whether it does is measured below.</p>
+      </div>
+      <div class="panel">
+        <h3>Residual force head</h3>
+        <ol>
+          <li>The plain head predicts the fingertip force vector (10 fingertips × 3 axes) at each of the next 16 frames, divided by 10 N.</li>
+          <li>The residual head predicts the same thing minus the force measured right now, so its target is zero whenever force does not change.</li>
+          <li>The measured force is added back to give newtons. Loss and weight are identical.</li>
+          <li>It needs the fingertip force input. With that input off, or zeroed at test time, it falls back to predicting from zero.</li>
+        </ol>
+        <p style="font-size:14px" id="res_txt"></p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What is active for which input</h2>
+    <p>Three measurements on the 19,079 held-out frames, split by whether a fingertip is in contact (above 1 N).</p>
+
+    <div class="panel">
+      <div class="chead"><h3>How much the action changes when one input is swapped for another frame's</h3>
+        <select id="ko_model" aria-label="Model"><option value="full">model with force</option><option value="no_force">model without force</option></select>
+        <div class="legend"><span><i style="background:var(--s1)"></i>in contact</span><span><i style="background:var(--s2)"></i>free motion</span></div></div>
+      <div class="bars" id="ko"></div>
+      <div class="note">Mean change of the 16-step prediction in mrad, averaged over 3 seeds. Larger means the model relies on that input more.</div>
+    </div>
+
+    <div class="panel">
+      <div class="chead"><h3>Where the query slots look</h3>
+        <select id="at_slot" aria-label="Query slot"></select>
+        <div class="legend"><span><i style="background:var(--s1)"></i>in contact</span><span><i style="background:var(--s2)"></i>free motion</span></div></div>
+      <div class="bars" id="at"></div>
+      <div class="note">Share of decoder attention on each input group, model with force, seed 0, averaged over the 3 decoder layers. Attention shows where a slot reads from, not how much the output depends on it.</div>
+    </div>
+
+    <div class="panel">
+      <div class="chead"><h3>Which expert the gate picks</h3></div>
+      <div class="tw"><table id="gate"></table></div>
+      <div class="note" id="gate_note"></div>
+    </div>
+    <ul id="findings"></ul>
+  </section>
+</div>
+<script>
+const A = {full: {
+ "variant": "full",
+ "seeds": {
+  "seed0": {
+   "conditions": {
+    "contact": 12724,
+    "free": 6355,
+    "phase: none": 1860,
+    "phase: pick": 9014,
+    "phase: place": 2360,
+    "phase: wipe": 5845
+   },
+   "gate": {
+    "contact": [
+     0.7019659280776978,
+     0.29803404211997986
+    ],
+    "free": [
+     0.351616233587265,
+     0.6483837366104126
+    ],
+    "phase: none": [
+     0.9910832047462463,
+     0.00891677476465702
+    ],
+    "phase: pick": [
+     0.30308282375335693,
+     0.6969171166419983
+    ],
+    "phase: place": [
+     0.5655854940414429,
+     0.43441450595855713
+    ],
+    "phase: wipe": [
+     0.8992559909820557,
+     0.1007440984249115
+    ]
+   },
+   "expert_arm_mrad": {
+    "contact": [
+     17.506670206785202,
+     14.051102101802826
+    ],
+    "free": [
+     23.674307391047478,
+     25.668395683169365
+    ],
+    "phase: none": [
+     71.88605517148972,
+     0.3662150411400944
+    ],
+    "phase: pick": [
+     5.744152702391148,
+     29.27839383482933
+    ],
+    "phase: place": [
+     31.760327517986298,
+     27.590783312916756
+    ],
+    "phase: wipe": [
+     19.29253712296486,
+     2.0869122818112373
+    ]
+   },
+   "expert_hand_mrad": {
+    "contact": [
+     34.24366936087608,
+     19.596673548221588
+    ],
+    "free": [
+     29.18211743235588,
+     24.394402280449867
+    ],
+    "phase: none": [
+     93.70984882116318,
+     0.7751792436465621
+    ],
+    "phase: pick": [
+     10.975451208651066,
+     32.866787165403366
+    ],
+    "phase: place": [
+     40.6314879655838,
+     34.444719552993774
+    ],
+    "phase: wipe": [
+     43.121542781591415,
+     4.34250058606267
+    ]
+   },
+   "expert_separation_mrad": {
+    "contact": 36.39432144165039,
+    "free": 72.7569351196289,
+    "phase: none": 156.20872497558594,
+    "phase: pick": 39.75982666015625,
+    "phase: place": 53.94970703125,
+    "phase: wipe": 25.523876190185547
+   },
+   "knockout_mrad": {
+    "cameras": {
+     "contact": 7.36835241317749,
+     "free": 7.835974216461182,
+     "phase: none": 10.066349983215332,
+     "phase: pick": 7.266845703125,
+     "phase: place": 12.251269340515137,
+     "phase: wipe": 5.203212738037109
+    },
+    "joint state": {
+     "contact": 48.62302017211914,
+     "free": 70.75336456298828,
+     "phase: none": 108.8179931640625,
+     "phase: pick": 53.41779327392578,
+     "phase: place": 70.15458679199219,
+     "phase: wipe": 37.441001892089844
+    },
+    "fingertip force": {
+     "contact": 14.158658027648926,
+     "free": 8.58457088470459,
+     "phase: none": 12.473856925964355,
+     "phase: pick": 10.049163818359375,
+     "phase: place": 19.214149475097656,
+     "phase: wipe": 12.930672645568848
+    },
+    "joint torque": {
+     "contact": 21.35211181640625,
+     "free": 25.294408798217773,
+     "phase: none": 44.74882507324219,
+     "phase: pick": 18.934946060180664,
+     "phase: place": 31.638139724731445,
+     "phase: wipe": 17.767637252807617
+    }
+   },
+   "attention": {
+    "groups": [
+     "camera head_left",
+     "camera wrist_left",
+     "camera wrist_right",
+     "joint state",
+     "fingertip force",
+     "joint torque",
+     "task"
+    ],
+    "tokens": [
+     17,
+     17,
+     17,
+     6,
+     6,
+     6,
+     1
+    ],
+    "slots": {
+     "action / force slots (16)": {
+      "contact": [
+       0.16923554241657257,
+       0.10567327588796616,
+       0.10679864138364792,
+       0.24560599029064178,
+       0.2840450704097748,
+       0.0833209678530693,
+       0.005320537835359573
+      ],
+      "free": [
+       0.20065732300281525,
+       0.13798660039901733,
+       0.14645755290985107,
+       0.3054923117160797,
+       0.0647769644856453,
+       0.13413645327091217,
+       0.01049286313354969
+      ],
+      "phase: none": [
+       0.2300538867712021,
+       0.12460946291685104,
+       0.146119624376297,
+       0.38272616267204285,
+       0.04240705445408821,
+       0.061617229133844376,
+       0.012466575019061565
+      ],
+      "phase: pick": [
+       0.1810588538646698,
+       0.12655265629291534,
+       0.12491236627101898,
+       0.25443321466445923,
+       0.1675863415002823,
+       0.1380174309015274,
+       0.007439197972416878
+      ],
+      "phase: place": [
+       0.1589692085981369,
+       0.12326303124427795,
+       0.1252514272928238,
+       0.2914291322231293,
+       0.220131054520607,
+       0.07359886914491653,
+       0.007357299793511629
+      ],
+      "phase: wipe": [
+       0.16995693743228912,
+       0.09547846019268036,
+       0.10202012211084366,
+       0.2349683791399002,
+       0.3279447555541992,
+       0.06505092233419418,
+       0.004580441862344742
+      ]
+     },
+     "contact-soon slot": {
+      "contact": [
+       0.1257762908935547,
+       0.28916826844215393,
+       0.1408533751964569,
+       0.1378801017999649,
+       0.23619791865348816,
+       0.0652339980006218,
+       0.0048900567926466465
+      ],
+      "free": [
+       0.09179047495126724,
+       0.3900303542613983,
+       0.18091535568237305,
+       0.1604125201702118,
+       0.08026281744241714,
+       0.07277125865221024,
+       0.023817267268896103
+      ],
+      "phase: none": [
+       0.09301823377609253,
+       0.41757071018218994,
+       0.19024032354354858,
+       0.12090826779603958,
+       0.09453146159648895,
+       0.053621042519807816,
+       0.030109984800219536
+      ],
+      "phase: pick": [
+       0.11007086932659149,
+       0.3498355448246002,
+       0.15175503492355347,
+       0.17598123848438263,
+       0.12775090336799622,
+       0.07218571752309799,
+       0.012420677579939365
+      ],
+      "phase: place": [
+       0.10002776980400085,
+       0.30558866262435913,
+       0.14528200030326843,
+       0.15054786205291748,
+       0.24157746136188507,
+       0.04746445268392563,
+       0.009511848911643028
+      ],
+      "phase: wipe": [
+       0.13386614620685577,
+       0.2577812671661377,
+       0.15009461343288422,
+       0.10390602797269821,
+       0.27681005001068115,
+       0.0735783576965332,
+       0.003963610623031855
+      ]
+     },
+     "phase slot": {
+      "contact": [
+       0.1130402535200119,
+       0.10325361788272858,
+       0.17696958780288696,
+       0.2431296557188034,
+       0.11273980140686035,
+       0.24259504675865173,
+       0.008272063918411732
+      ],
+      "free": [
+       0.14267224073410034,
+       0.1187116727232933,
+       0.1602526605129242,
+       0.2915026843547821,
+       0.07480665296316147,
+       0.20498092472553253,
+       0.00707318726927042
+      ],
+      "phase: none": [
+       0.12563443183898926,
+       0.08972275257110596,
+       0.12611834704875946,
+       0.23025305569171906,
+       0.0708155632019043,
+       0.35176175832748413,
+       0.0056940908543765545
+      ],
+      "phase: pick": [
+       0.13224151730537415,
+       0.12103156745433807,
+       0.18238690495491028,
+       0.258421391248703,
+       0.13794180750846863,
+       0.16182707250118256,
+       0.006149806547909975
+      ],
+      "phase: place": [
+       0.07174205780029297,
+       0.06742049753665924,
+       0.12850429117679596,
+       0.40528902411460876,
+       0.06556516885757446,
+       0.25721651315689087,
+       0.004262469708919525
+      ],
+      "phase: wipe": [
+       0.12831315398216248,
+       0.1114177405834198,
+       0.18619003891944885,
+       0.21076449751853943,
+       0.06501956284046173,
+       0.2856142818927765,
+       0.012680761516094208
+      ]
+     },
+     "force-level slot": {
+      "contact": [
+       0.17782360315322876,
+       0.15905970335006714,
+       0.11663103848695755,
+       0.1679462045431137,
+       0.28595656156539917,
+       0.08574813604354858,
+       0.006834777072072029
+      ],
+      "free": [
+       0.08597159385681152,
+       0.24027425050735474,
+       0.14526505768299103,
+       0.2079271376132965,
+       0.19040806591510773,
+       0.09354204684495926,
+       0.03661186248064041
+      ],
+      "phase: none": [
+       0.10395491868257523,
+       0.23339101672172546,
+       0.14314806461334229,
+       0.1312049776315689,
+       0.24506749212741852,
+       0.08392371982336044,
+       0.05930984392762184
+      ],
+      "phase: pick": [
+       0.12905685603618622,
+       0.2135983258485794,
+       0.13113760948181152,
+       0.2150888592004776,
+       0.2074407935142517,
+       0.08858970552682877,
+       0.015087814070284367
+      ],
+      "phase: place": [
+       0.14179621636867523,
+       0.17233681678771973,
+       0.12107492238283157,
+       0.18136371672153473,
+       0.27553698420524597,
+       0.09416168183088303,
+       0.013729706406593323
+      ],
+      "phase: wipe": [
+       0.19121699035167694,
+       0.13423797488212585,
+       0.1151592954993248,
+       0.1449877768754959,
+       0.3203747272491455,
+       0.08702342212200165,
+       0.006999852601438761
+      ]
+     }
+    }
+   },
+   "params": {
+    "vis_proj": 99328,
+    "state_in": 15104,
+    "tactile_in": 15616,
+    "torque_in": 15104,
+    "task_emb": 256,
+    "encoder": 3159040,
+    "decoder": 3160320,
+    "enc_norm": 512,
+    "dec_norm": 512,
+    "experts": 161396,
+    "gate": 1538,
+    "force_head": 73502,
+    "contact_head": 257,
+    "phase_head": 1028,
+    "level_head": 257,
+    "total": 6724509
+   }
+  },
+  "seed1": {
+   "conditions": {
+    "contact": 12724,
+    "free": 6355,
+    "phase: none": 1860,
+    "phase: pick": 9014,
+    "phase: place": 2360,
+    "phase: wipe": 5845
+   },
+   "gate": {
+    "contact": [
+     0.394700825214386,
+     0.6052992343902588
+    ],
+    "free": [
+     0.5353257656097412,
+     0.4646742641925812
+    ],
+    "phase: none": [
+     0.7484203577041626,
+     0.2515795826911926
+    ],
+    "phase: pick": [
+     0.489805668592453,
+     0.5101943016052246
+    ],
+    "phase: place": [
+     0.2520392835140228,
+     0.7479606866836548
+    ],
+    "phase: wipe": [
+     0.34596845507621765,
+     0.6540315747261047
+    ]
+   },
+   "expert_arm_mrad": {
+    "contact": [
+     14.777487143874168,
+     16.794390976428986
+    ],
+    "free": [
+     30.540138483047485,
+     20.14603093266487
+    ],
+    "phase: none": [
+     65.334752202034,
+     9.113720618188381
+    ],
+    "phase: pick": [
+     19.51969787478447,
+     16.186073422431946
+    ],
+    "phase: place": [
+     16.77214540541172,
+     42.96724498271942
+    ],
+    "phase: wipe": [
+     7.7084447257220745,
+     13.25310580432415
+    ]
+   },
+   "expert_hand_mrad": {
+    "contact": [
+     21.953484043478966,
+     32.48421475291252
+    ],
+    "free": [
+     34.560587257146835,
+     19.03539150953293
+    ],
+    "phase: none": [
+     91.24796837568283,
+     1.985324313864112
+    ],
+    "phase: pick": [
+     21.356232464313507,
+     23.0477973818779
+    ],
+    "phase: place": [
+     19.895149394869804,
+     55.86168169975281
+    ],
+    "phase: wipe": [
+     15.36180917173624,
+     32.68091008067131
+    ]
+   },
+   "expert_separation_mrad": {
+    "contact": 36.0239372253418,
+    "free": 49.834327697753906,
+    "phase: none": 90.99591827392578,
+    "phase: pick": 35.22224426269531,
+    "phase: place": 64.08285522460938,
+    "phase: wipe": 23.453290939331055
+   },
+   "knockout_mrad": {
+    "cameras": {
+     "contact": 6.96930456161499,
+     "free": 7.612786293029785,
+     "phase: none": 9.785309791564941,
+     "phase: pick": 7.096538543701172,
+     "phase: place": 11.705758094787598,
+     "phase: wipe": 4.664196014404297
+    },
+    "joint state": {
+     "contact": 48.06291580200195,
+     "free": 69.65470886230469,
+     "phase: none": 108.07096099853516,
+     "phase: pick": 52.87653350830078,
+     "phase: place": 72.78953552246094,
+     "phase: wipe": 35.03571319580078
+    },
+    "fingertip force": {
+     "contact": 14.045967102050781,
+     "free": 6.946058750152588,
+     "phase: none": 11.229268074035645,
+     "phase: pick": 9.242624282836914,
+     "phase: place": 18.656972885131836,
+     "phase: wipe": 12.76872444152832
+    },
+    "joint torque": {
+     "contact": 22.374208450317383,
+     "free": 18.752290725708008,
+     "phase: none": 26.446630477905273,
+     "phase: pick": 19.520130157470703,
+     "phase: place": 29.781551361083984,
+     "phase: wipe": 18.55100440979004
+    }
+   }
+  },
+  "seed2": {
+   "conditions": {
+    "contact": 12724,
+    "free": 6355,
+    "phase: none": 1860,
+    "phase: pick": 9014,
+    "phase: place": 2360,
+    "phase: wipe": 5845
+   },
+   "gate": {
+    "contact": [
+     0.8078606128692627,
+     0.19213928282260895
+    ],
+    "free": [
+     0.49644535779953003,
+     0.50355464220047
+    ],
+    "phase: none": [
+     0.1462947130203247,
+     0.8537052869796753
+    ],
+    "phase: pick": [
+     0.6816002726554871,
+     0.3183997869491577
+    ],
+    "phase: place": [
+     0.795651912689209,
+     0.20434802770614624
+    ],
+    "phase: wipe": [
+     0.8794419765472412,
+     0.1205580085515976
+    ]
+   },
+   "expert_arm_mrad": {
+    "contact": [
+     20.8132304251194,
+     10.887767188251019
+    ],
+    "free": [
+     12.417983263731003,
+     37.692178040742874
+    ],
+    "phase: none": [
+     5.485524423420429,
+     68.72521340847015
+    ],
+    "phase: pick": [
+     14.788880944252014,
+     20.503245294094086
+    ],
+    "phase: place": [
+     42.635709047317505,
+     15.786856412887573
+    ],
+    "phase: wipe": [
+     17.04251766204834,
+     4.819091875106096
+    ]
+   },
+   "expert_hand_mrad": {
+    "contact": [
+     40.99292308092117,
+     13.425977900624275
+    ],
+    "free": [
+     14.887033961713314,
+     39.51742872595787
+    ],
+    "phase: none": [
+     1.513205235823989,
+     93.16378086805344
+    ],
+    "phase: pick": [
+     25.240948423743248,
+     19.249841570854187
+    ],
+    "phase: place": [
+     58.21172520518303,
+     17.9170873016119
+    ],
+    "phase: wipe": [
+     42.51239076256752,
+     5.6250388734042645
+    ]
+   },
+   "expert_separation_mrad": {
+    "contact": 39.42068862915039,
+    "free": 51.697425842285156,
+    "phase: none": 88.72692108154297,
+    "phase: pick": 37.529205322265625,
+    "phase: place": 64.7963638305664,
+    "phase: wipe": 29.749574661254883
+   },
+   "knockout_mrad": {
+    "cameras": {
+     "contact": 6.957624912261963,
+     "free": 7.280923843383789,
+     "phase: none": 9.046479225158691,
+     "phase: pick": 6.912198543548584,
+     "phase: place": 11.787280082702637,
+     "phase: wipe": 4.764431476593018
+    },
+    "joint state": {
+     "contact": 44.952293395996094,
+     "free": 65.3330078125,
+     "phase: none": 104.4018325805664,
+     "phase: pick": 49.30146408081055,
+     "phase: place": 69.53813934326172,
+     "phase: wipe": 31.559186935424805
+    },
+    "fingertip force": {
+     "contact": 14.158285140991211,
+     "free": 8.674816131591797,
+     "phase: none": 13.880932807922363,
+     "phase: pick": 9.897920608520508,
+     "phase: place": 20.06704330444336,
+     "phase: wipe": 12.46909236907959
+    },
+    "joint torque": {
+     "contact": 20.695037841796875,
+     "free": 23.989042282104492,
+     "phase: none": 25.745615005493164,
+     "phase: pick": 22.191389083862305,
+     "phase: place": 30.853975296020508,
+     "phase: wipe": 16.25980567932129
+    }
+   }
+  }
+ }
+}, no_force: {
+ "variant": "no_force",
+ "seeds": {
+  "seed0": {
+   "conditions": {
+    "contact": 12724,
+    "free": 6355,
+    "phase: none": 1860,
+    "phase: pick": 9014,
+    "phase: place": 2360,
+    "phase: wipe": 5845
+   },
+   "gate": {
+    "contact": [
+     0.4571582078933716,
+     0.5428417921066284
+    ],
+    "free": [
+     0.4153957962989807,
+     0.5846042037010193
+    ],
+    "phase: none": [
+     0.8767185211181641,
+     0.12328150123357773
+    ],
+    "phase: pick": [
+     0.26328662037849426,
+     0.7367133498191833
+    ],
+    "phase: place": [
+     0.6533781886100769,
+     0.3466217815876007
+    ],
+    "phase: wipe": [
+     0.49799609184265137,
+     0.5020039081573486
+    ]
+   },
+   "expert_arm_mrad": {
+    "contact": [
+     17.06785522401333,
+     16.56777784228325
+    ],
+    "free": [
+     26.924965903162956,
+     23.915259167551994
+    ],
+    "phase: none": [
+     73.10669869184494,
+     1.8289847066625953
+    ],
+    "phase: pick": [
+     6.7043364979326725,
+     29.359107837080956
+    ],
+    "phase: place": [
+     45.26926949620247,
+     13.495245017111301
+    ],
+    "phase: wipe": [
+     14.547941274940968,
+     10.760679841041565
+    ]
+   },
+   "expert_hand_mrad": {
+    "contact": [
+     23.948369547724724,
+     31.56096115708351
+    ],
+    "free": [
+     32.199036329984665,
+     23.224135860800743
+    ],
+    "phase: none": [
+     93.76691281795502,
+     1.5331186586990952
+    ],
+    "phase: pick": [
+     9.149747900664806,
+     36.449600011110306
+    ],
+    "phase: place": [
+     47.49145358800888,
+     28.89029309153557
+    ],
+    "phase: wipe": [
+     24.017419666051865,
+     25.59139020740986
+    ]
+   },
+   "expert_separation_mrad": {
+    "contact": 40.61482620239258,
+    "free": 59.79514694213867,
+    "phase: none": 105.1863784790039,
+    "phase: pick": 41.75733947753906,
+    "phase: place": 69.54146575927734,
+    "phase: wipe": 27.479217529296875
+   },
+   "knockout_mrad": {
+    "cameras": {
+     "contact": 15.090301513671875,
+     "free": 11.435306549072266,
+     "phase: none": 13.74091625213623,
+     "phase: pick": 12.814632415771484,
+     "phase: place": 21.305505752563477,
+     "phase: wipe": 12.545796394348145
+    },
+    "joint state": {
+     "contact": 64.7725830078125,
+     "free": 81.99095916748047,
+     "phase: none": 116.27806091308594,
+     "phase: pick": 67.0782470703125,
+     "phase: place": 86.81279754638672,
+     "phase: wipe": 54.64844512939453
+    },
+    "fingertip force": {
+     "contact": 0.0,
+     "free": 0.0,
+     "phase: none": 0.0,
+     "phase: pick": 0.0,
+     "phase: place": 0.0,
+     "phase: wipe": 0.0
+    },
+    "joint torque": {
+     "contact": 0.0,
+     "free": 0.0,
+     "phase: none": 0.0,
+     "phase: pick": 0.0,
+     "phase: place": 0.0,
+     "phase: wipe": 0.0
+    }
+   },
+   "attention": {
+    "groups": [
+     "camera head_left",
+     "camera wrist_left",
+     "camera wrist_right",
+     "joint state",
+     "fingertip force",
+     "joint torque",
+     "task"
+    ],
+    "tokens": [
+     17,
+     17,
+     17,
+     6,
+     6,
+     6,
+     1
+    ],
+    "slots": {
+     "action / force slots (16)": {
+      "contact": [
+       0.13226430118083954,
+       0.1023021712899208,
+       0.08871082216501236,
+       0.2522231936454773,
+       0.2070349007844925,
+       0.2097863107919693,
+       0.007678351365029812
+      ],
+      "free": [
+       0.18635152280330658,
+       0.15982811152935028,
+       0.15423688292503357,
+       0.29927507042884827,
+       0.09195174276828766,
+       0.09357713907957077,
+       0.014779524877667427
+      ],
+      "phase: none": [
+       0.2200782150030136,
+       0.16378629207611084,
+       0.1742260456085205,
+       0.2789634168148041,
+       0.07720249146223068,
+       0.07797078788280487,
+       0.007772785145789385
+      ],
+      "phase: pick": [
+       0.14696818590164185,
+       0.13301636278629303,
+       0.12044401466846466,
+       0.29129624366760254,
+       0.1458810418844223,
+       0.14954818785190582,
+       0.012846007943153381
+      ],
+      "phase: place": [
+       0.2047889083623886,
+       0.13824254274368286,
+       0.13200239837169647,
+       0.29070937633514404,
+       0.11157184839248657,
+       0.11297790706157684,
+       0.009707003831863403
+      ],
+      "phase: wipe": [
+       0.11116792261600494,
+       0.08340395987033844,
+       0.06632393598556519,
+       0.21907450258731842,
+       0.2560800015926361,
+       0.25736916065216064,
+       0.006580564193427563
+      ]
+     },
+     "contact-soon slot": {
+      "contact": [
+       0.14049188792705536,
+       0.08496704697608948,
+       0.06596437096595764,
+       0.27106398344039917,
+       0.21409276127815247,
+       0.21740715205669403,
+       0.006012805737555027
+      ],
+      "free": [
+       0.1972370445728302,
+       0.14889995753765106,
+       0.1382787972688675,
+       0.31609225273132324,
+       0.09240264445543289,
+       0.09400845319032669,
+       0.01308086421340704
+      ],
+      "phase: none": [
+       0.21973608434200287,
+       0.16608965396881104,
+       0.1675257384777069,
+       0.27540120482444763,
+       0.08182376623153687,
+       0.08426879346370697,
+       0.0051548173651099205
+      ],
+      "phase: pick": [
+       0.15453851222991943,
+       0.1167156845331192,
+       0.09651463478803635,
+       0.3114785850048065,
+       0.15309962630271912,
+       0.156541645526886,
+       0.011111359111964703
+      ],
+      "phase: place": [
+       0.23394635319709778,
+       0.12673598527908325,
+       0.11360432207584381,
+       0.31793496012687683,
+       0.10024171322584152,
+       0.10041220486164093,
+       0.007124491035938263
+      ],
+      "phase: wipe": [
+       0.11757530272006989,
+       0.06283682584762573,
+       0.04592050239443779,
+       0.23738987743854523,
+       0.263906329870224,
+       0.2667122781276703,
+       0.005658900830894709
+      ]
+     },
+     "phase slot": {
+      "contact": [
+       0.15465250611305237,
+       0.1442047655582428,
+       0.16847623884677887,
+       0.18252785503864288,
+       0.16745126247406006,
+       0.17357076704502106,
+       0.009116604924201965
+      ],
+      "free": [
+       0.1589175909757614,
+       0.18586623668670654,
+       0.1933639645576477,
+       0.2629360854625702,
+       0.09097657352685928,
+       0.09286477416753769,
+       0.015074820257723331
+      ],
+      "phase: none": [
+       0.14880985021591187,
+       0.18710684776306152,
+       0.19784297049045563,
+       0.18694078922271729,
+       0.1341005563735962,
+       0.1412058025598526,
+       0.003993235528469086
+      ],
+      "phase: pick": [
+       0.18053440749645233,
+       0.1733708679676056,
+       0.2027595490217209,
+       0.2363913357257843,
+       0.09384799748659134,
+       0.09513189643621445,
+       0.017963966354727745
+      ],
+      "phase: place": [
+       0.140794575214386,
+       0.13957586884498596,
+       0.16401492059230804,
+       0.20183059573173523,
+       0.170469269156456,
+       0.17936861515045166,
+       0.003946233075112104
+      ],
+      "phase: wipe": [
+       0.12682999670505524,
+       0.13273885846138,
+       0.1351209580898285,
+       0.17768719792366028,
+       0.2072071135044098,
+       0.2147473841905594,
+       0.00566851207986474
+      ]
+     },
+     "force-level slot": {
+      "contact": [
+       0.13888627290725708,
+       0.0847553089261055,
+       0.06566636264324188,
+       0.2728593945503235,
+       0.21418890357017517,
+       0.21772727370262146,
+       0.0059165204875171185
+      ],
+      "free": [
+       0.19561409950256348,
+       0.14939932525157928,
+       0.13850094377994537,
+       0.317583292722702,
+       0.09212618321180344,
+       0.09375814348459244,
+       0.013018066063523293
+      ],
+      "phase: none": [
+       0.2185276448726654,
+       0.16699400544166565,
+       0.16812527179718018,
+       0.2779201567173004,
+       0.08045367896556854,
+       0.0828741192817688,
+       0.005105139687657356
+      ],
+      "phase: pick": [
+       0.15174968540668488,
+       0.11669819056987762,
+       0.0965777337551117,
+       0.3127594292163849,
+       0.15385311841964722,
+       0.15734580159187317,
+       0.01101604662835598
+      ],
+      "phase: place": [
+       0.23312069475650787,
+       0.1279616504907608,
+       0.11323784291744232,
+       0.32136690616607666,
+       0.09849907457828522,
+       0.09863507747650146,
+       0.00717875687405467
+      ],
+      "phase: wipe": [
+       0.11733417212963104,
+       0.06216307356953621,
+       0.04537319391965866,
+       0.23875683546066284,
+       0.26379260420799255,
+       0.26705822348594666,
+       0.005521907936781645
+      ]
+     }
+    }
+   },
+   "params": {
+    "vis_proj": 99328,
+    "state_in": 15104,
+    "tactile_in": 15616,
+    "torque_in": 15104,
+    "task_emb": 256,
+    "encoder": 3159040,
+    "decoder": 3160320,
+    "enc_norm": 512,
+    "dec_norm": 512,
+    "experts": 161396,
+    "gate": 1538,
+    "force_head": 73502,
+    "contact_head": 257,
+    "phase_head": 1028,
+    "level_head": 257,
+    "total": 6724509
+   }
+  },
+  "seed1": {
+   "conditions": {
+    "contact": 12724,
+    "free": 6355,
+    "phase: none": 1860,
+    "phase: pick": 9014,
+    "phase: place": 2360,
+    "phase: wipe": 5845
+   },
+   "gate": {
+    "contact": [
+     0.8405413031578064,
+     0.15945863723754883
+    ],
+    "free": [
+     0.1334654837846756,
+     0.8665345907211304
+    ],
+    "phase: none": [
+     0.16415061056613922,
+     0.835849404335022
+    ],
+    "phase: pick": [
+     0.48580241203308105,
+     0.514197587966919
+    ],
+    "phase: place": [
+     0.5315608382225037,
+     0.4684391915798187
+    ],
+    "phase: wipe": [
+     0.958835780620575,
+     0.041164275258779526
+    ]
+   },
+   "expert_arm_mrad": {
+    "contact": [
+     24.756185710430145,
+     7.810510694980621
+    ],
+    "free": [
+     2.4569774977862835,
+     46.89570516347885
+    ],
+    "phase: none": [
+     5.304687190800905,
+     67.6034688949585
+    ],
+    "phase: pick": [
+     15.586658380925655,
+     19.859323278069496
+    ],
+    "phase: place": [
+     20.979508757591248,
+     37.234943360090256
+    ],
+    "phase: wipe": [
+     22.367030382156372,
+     0.8168190252035856
+    ]
+   },
+   "expert_hand_mrad": {
+    "contact": [
+     44.12933439016342,
+     10.243005119264126
+    ],
+    "free": [
+     2.3783419746905565,
+     51.468782126903534
+    ],
+    "phase: none": [
+     1.356534194201231,
+     93.10447424650192
+    ],
+    "phase: pick": [
+     23.56494776904583,
+     20.75633592903614
+    ],
+    "phase: place": [
+     38.0488820374012,
+     37.03298419713974
+    ],
+    "phase: wipe": [
+     46.515487134456635,
+     1.6674647340551019
+    ]
+   },
+   "expert_separation_mrad": {
+    "contact": 43.93080139160156,
+    "free": 51.079593658447266,
+    "phase: none": 90.3362808227539,
+    "phase: pick": 40.02801513671875,
+    "phase: place": 65.35572052001953,
+    "phase: wipe": 34.30432891845703
+   },
+   "knockout_mrad": {
+    "cameras": {
+     "contact": 13.490160942077637,
+     "free": 11.956132888793945,
+     "phase: none": 13.074990272521973,
+     "phase: pick": 12.697104454040527,
+     "phase: place": 20.454917907714844,
+     "phase: wipe": 10.365312576293945
+    },
+    "joint state": {
+     "contact": 64.9087905883789,
+     "free": 82.2582778930664,
+     "phase: none": 116.96185302734375,
+     "phase: pick": 67.1024169921875,
+     "phase: place": 87.567138671875,
+     "phase: wipe": 54.6761589050293
+    },
+    "fingertip force": {
+     "contact": 0.0,
+     "free": 0.0,
+     "phase: none": 0.0,
+     "phase: pick": 0.0,
+     "phase: place": 0.0,
+     "phase: wipe": 0.0
+    },
+    "joint torque": {
+     "contact": 0.0,
+     "free": 0.0,
+     "phase: none": 0.0,
+     "phase: pick": 0.0,
+     "phase: place": 0.0,
+     "phase: wipe": 0.0
+    }
+   }
+  },
+  "seed2": {
+   "conditions": {
+    "contact": 12724,
+    "free": 6355,
+    "phase: none": 1860,
+    "phase: pick": 9014,
+    "phase: place": 2360,
+    "phase: wipe": 5845
+   },
+   "gate": {
+    "contact": [
+     0.6708053350448608,
+     0.32919472455978394
+    ],
+    "free": [
+     0.2552478015422821,
+     0.7447521686553955
+    ],
+    "phase: none": [
+     0.5231775641441345,
+     0.47682246565818787
+    ],
+    "phase: pick": [
+     0.36956992745399475,
+     0.6304300427436829
+    ],
+    "phase: place": [
+     0.46277502179145813,
+     0.5372249484062195
+    ],
+    "phase: wipe": [
+     0.814518928527832,
+     0.1854809820652008
+    ]
+   },
+   "expert_arm_mrad": {
+    "contact": [
+     18.44346523284912,
+     15.139949508011341
+    ],
+    "free": [
+     14.073612168431282,
+     35.484232008457184
+    ],
+    "phase: none": [
+     36.31506487727165,
+     36.461908370256424
+    ],
+    "phase: pick": [
+     9.271583519876003,
+     26.857201009988785
+    ],
+    "phase: place": [
+     22.20567688345909,
+     35.540543496608734
+    ],
+    "phase: wipe": [
+     20.630797371268272,
+     4.167216829955578
+    ]
+   },
+   "expert_hand_mrad": {
+    "contact": [
+     33.48865360021591,
+     21.793538704514503
+    ],
+    "free": [
+     28.862692415714264,
+     26.347454637289047
+    ],
+    "phase: none": [
+     89.27727490663528,
+     6.525191478431225
+    ],
+    "phase: pick": [
+     13.877621851861477,
+     31.68705478310585
+    ],
+    "phase: place": [
+     34.72405672073364,
+     40.99636152386665
+    ],
+    "phase: wipe": [
+     40.45076295733452,
+     8.592592552304268
+    ]
+   },
+   "expert_separation_mrad": {
+    "contact": 37.16850280761719,
+    "free": 54.34751892089844,
+    "phase: none": 90.80909729003906,
+    "phase: pick": 39.65046691894531,
+    "phase: place": 57.41146469116211,
+    "phase: wipe": 26.775903701782227
+   },
+   "knockout_mrad": {
+    "cameras": {
+     "contact": 13.861218452453613,
+     "free": 12.096209526062012,
+     "phase: none": 13.844196319580078,
+     "phase: pick": 13.030592918395996,
+     "phase: place": 21.14609146118164,
+     "phase: wipe": 10.287219047546387
+    },
+    "joint state": {
+     "contact": 65.64993286132812,
+     "free": 82.92283630371094,
+     "phase: none": 117.29792022705078,
+     "phase: pick": 67.98963165283203,
+     "phase: place": 86.70730590820312,
+     "phase: wipe": 55.88408279418945
+    },
+    "fingertip force": {
+     "contact": 0.0,
+     "free": 0.0,
+     "phase: none": 0.0,
+     "phase: pick": 0.0,
+     "phase: place": 0.0,
+     "phase: wipe": 0.0
+    },
+    "joint torque": {
+     "contact": 0.0,
+     "free": 0.0,
+     "phase: none": 0.0,
+     "phase: pick": 0.0,
+     "phase: place": 0.0,
+     "phase: wipe": 0.0
+    }
+   }
+  }
+ }
+}}, R = {
+ "act": {
+  "full": {
+   "all": {
+    "mean": 0.019077852535034318,
+    "lo": 0.018212784635168545,
+    "hi": 0.019917996019148083,
+    "per_seed": [
+     0.019163075615020498,
+     0.01903953182503002,
+     0.019030950165052435
+    ]
+   },
+   "contact": {
+    "mean": 0.020064062083715296,
+    "lo": 0.019118794771666336,
+    "hi": 0.020943994284713417,
+    "per_seed": [
+     0.02014156966931305,
+     0.019974669707376238,
+     0.0200759468744566
+    ]
+   },
+   "free": {
+    "mean": 0.017103260828123728,
+    "lo": 0.01592487934526882,
+    "hi": 0.018397010064083875,
+    "per_seed": [
+     0.017203931894041978,
+     0.017167195961147512,
+     0.016938654629181687
+    ]
+   }
+  },
+  "no_force": {
+   "all": {
+    "mean": 0.02057195101975452,
+    "lo": 0.018989741736598946,
+    "hi": 0.022286220567677886,
+    "per_seed": [
+     0.020416005241045004,
+     0.020561305702347595,
+     0.020738542115870957
+    ],
+    "diff": 0.0014940984847202007,
+    "diff_lo": 0.0005972379366199911,
+    "diff_hi": 0.002534838476804932
+   },
+   "contact": {
+    "mean": 0.022098094475824167,
+    "lo": 0.020170351104393174,
+    "hi": 0.024084980277638057,
+    "per_seed": [
+     0.021817826546420976,
+     0.022067217882578424,
+     0.02240923899847309
+    ],
+    "diff": 0.0020340323921088713,
+    "diff_lo": 0.0008130660639373919,
+    "diff_hi": 0.0033609947787004357
+   },
+   "free": {
+    "mean": 0.017516302029191157,
+    "lo": 0.016170571943152308,
+    "hi": 0.018928896080638337,
+    "per_seed": [
+     0.017609274432295385,
+     0.017546163832755608,
+     0.017393467822522483
+    ],
+    "diff": 0.0004130412010674295,
+    "diff_lo": -1.4031173076373537e-05,
+    "diff_hi": 0.0009155516249258489
+   }
+  },
+  "no_tactile_input": {
+   "all": {
+    "mean": 0.019438113867549813,
+    "lo": 0.018434030531243126,
+    "hi": 0.020478346658480612,
+    "per_seed": [
+     0.01939762829511706,
+     0.019410299035341534,
+     0.019506414272190836
+    ],
+    "diff": 0.0003602613325154949,
+    "diff_lo": 4.7416174007144686e-05,
+    "diff_hi": 0.0007183653542639286
+   },
+   "contact": {
+    "mean": 0.020468682370432326,
+    "lo": 0.01932642944807621,
+    "hi": 0.021635494716282434,
+    "per_seed": [
+     0.0204189645488828,
+     0.020482766462495233,
+     0.02050431609991894
+    ],
+    "diff": 0.00040462028671702996,
+    "diff_lo": -3.7224874318517855e-05,
+    "diff_hi": 0.0008589202613753534
+   },
+   "free": {
+    "mean": 0.01737470652991376,
+    "lo": 0.016139708331783624,
+    "hi": 0.018683244486834397,
+    "per_seed": [
+     0.01735270579426493,
+     0.017263001546261498,
+     0.017508412249214848
+    ],
+    "diff": 0.00027144570179003097,
+    "diff_lo": -4.471796503135177e-05,
+    "diff_hi": 0.0006036601819361469
+   }
+  },
+  "no_torque_input": {
+   "all": {
+    "mean": 0.020413638008769896,
+    "lo": 0.01907075742695492,
+    "hi": 0.021940638351529422,
+    "per_seed": [
+     0.020190252306174,
+     0.02061950353275931,
+     0.020431158187376376
+    ],
+    "diff": 0.0013357854737355776,
+    "diff_lo": 0.0007037498747725449,
+    "diff_hi": 0.002237679044637862
+   },
+   "contact": {
+    "mean": 0.02173895440308717,
+    "lo": 0.02009392343227527,
+    "hi": 0.023601681813212635,
+    "per_seed": [
+     0.021458102093752023,
+     0.022048291403988944,
+     0.02171046971152055
+    ],
+    "diff": 0.0016748923193718734,
+    "diff_lo": 0.0008054223495679665,
+    "diff_hi": 0.002841591466440777
+   },
+   "free": {
+    "mean": 0.017760085561674226,
+    "lo": 0.01646575458156085,
+    "hi": 0.019214402234559853,
+    "per_seed": [
+     0.01765175967090371,
+     0.017758780185233605,
+     0.017869716828885357
+    ],
+    "diff": 0.0006568247335504984,
+    "diff_lo": 0.00031367930697401487,
+    "diff_hi": 0.0010294479627922337
+   }
+  },
+  "no_force_output": {
+   "all": {
+    "mean": 0.019169254489725313,
+    "lo": 0.018284462424017937,
+    "hi": 0.02003561241405487,
+    "per_seed": [
+     0.01914870524242374,
+     0.01901469991547744,
+     0.01934435831127476
+    ],
+    "diff": 9.14019546909943e-05,
+    "diff_lo": -0.00015181307899843281,
+    "diff_hi": 0.0003396765642182839
+   },
+   "contact": {
+    "mean": 0.020238075042480888,
+    "lo": 0.019242222733577913,
+    "hi": 0.02119760766204717,
+    "per_seed": [
+     0.020185077887580925,
+     0.020015067884255538,
+     0.020514079355606202
+    ],
+    "diff": 0.0001740129587655924,
+    "diff_lo": -0.00014405807834754413,
+    "diff_hi": 0.0005341133978981177
+   },
+   "free": {
+    "mean": 0.017029258783468518,
+    "lo": 0.015852899735032226,
+    "hi": 0.018298612937256774,
+    "per_seed": [
+     0.017073676833772283,
+     0.017011760177517956,
+     0.017002339339115307
+    ],
+    "diff": -7.400204465521018e-05,
+    "diff_lo": -0.0003223648134339417,
+    "diff_hi": 0.00019993418115392473
+   }
+  },
+  "no_decision_supervision": {
+   "all": {
+    "mean": 0.0190693811712124,
+    "lo": 0.018171093910550044,
+    "hi": 0.019995531651662207,
+    "per_seed": [
+     0.019027817904489555,
+     0.019021678842787507,
+     0.019158646766360143
+    ],
+    "diff": -8.471363821916517e-06,
+    "diff_lo": -0.00020267776124647364,
+    "diff_hi": 0.0002538024584371022
+   },
+   "contact": {
+    "mean": 0.02017948919608324,
+    "lo": 0.01915248977027989,
+    "hi": 0.02121274017847347,
+    "per_seed": [
+     0.02016835379943015,
+     0.019997960874216916,
+     0.020372152914602648
+    ],
+    "diff": 0.00011542711236794262,
+    "diff_lo": -0.0001521048497188636,
+    "diff_hi": 0.00047494170979937427
+   },
+   "free": {
+    "mean": 0.016846719564846308,
+    "lo": 0.015680719854630265,
+    "hi": 0.01813116991891651,
+    "per_seed": [
+     0.016744233525697403,
+     0.017066964040599018,
+     0.0167289611282425
+    ],
+    "diff": -0.0002565412632774197,
+    "diff_lo": -0.0005807392660719528,
+    "diff_hi": 6.137686648975608e-05
+   }
+  },
+  "full_residual_force": {
+   "all": {
+    "mean": 0.01921918253279167,
+    "lo": 0.018313684540176883,
+    "hi": 0.020138824508352436,
+    "per_seed": [
+     0.019144819573419646,
+     0.01916559708629048,
+     0.01934713093866488
+    ],
+    "diff": 0.0001413299977573515,
+    "diff_lo": -6.151273313039728e-05,
+    "diff_hi": 0.0003816091238733028
+   },
+   "contact": {
+    "mean": 0.020215131298939804,
+    "lo": 0.01918180654027333,
+    "hi": 0.021221559803724407,
+    "per_seed": [
+     0.020114587758768336,
+     0.020122190332248793,
+     0.020408615805802287
+    ],
+    "diff": 0.00015106921522450856,
+    "diff_lo": -0.00013520136471942577,
+    "diff_hi": 0.0004949526783646613
+   },
+   "free": {
+    "mean": 0.017225090935550302,
+    "lo": 0.01602894820387358,
+    "hi": 0.018562905988228368,
+    "per_seed": [
+     0.017203146813328896,
+     0.0172503032292372,
+     0.017221822764084804
+    ],
+    "diff": 0.00012183010742657444,
+    "diff_lo": -0.00013777764905683934,
+    "diff_hi": 0.0003902296028002988
+   }
+  },
+  "torque_arms_only": {
+   "all": {
+    "mean": 0.019636720286650176,
+    "lo": 0.018686283128180103,
+    "hi": 0.02061893341986436,
+    "per_seed": [
+     0.019572043160724042,
+     0.0196843552236086,
+     0.019653762475617887
+    ],
+    "diff": 0.0005588677516158574,
+    "diff_lo": 0.00030721563626858535,
+    "diff_hi": 0.0008134546719819655
+   },
+   "contact": {
+    "mean": 0.02070395803105493,
+    "lo": 0.01968186084143205,
+    "hi": 0.02170780996546285,
+    "per_seed": [
+     0.02067173427804594,
+     0.020698400452826803,
+     0.02074173936229205
+    ],
+    "diff": 0.0006398959473396353,
+    "diff_lo": 0.00036143087211602966,
+    "diff_hi": 0.0009093417458504152
+   },
+   "free": {
+    "mean": 0.01749989368400563,
+    "lo": 0.01615719981718684,
+    "hi": 0.019133356843669003,
+    "per_seed": [
+     0.017370238317796605,
+     0.01765403083390406,
+     0.017475411900316228
+    ],
+    "diff": 0.000396632855881901,
+    "diff_lo": 4.802552080668963e-06,
+    "diff_hi": 0.0009007220924502781
+   }
+  },
+  "torque_hands_only": {
+   "all": {
+    "mean": 0.019552260907839066,
+    "lo": 0.01853644478112635,
+    "hi": 0.020587500960660535,
+    "per_seed": [
+     0.019596542888244344,
+     0.019380290031818882,
+     0.019679949803453972
+    ],
+    "diff": 0.00047440837280474796,
+    "diff_lo": 0.00019587006628636353,
+    "diff_hi": 0.0008208651696103733
+   },
+   "contact": {
+    "mean": 0.02063163330820542,
+    "lo": 0.01947456027669019,
+    "hi": 0.02175605656728797,
+    "per_seed": [
+     0.020743039733385805,
+     0.020435938386389876,
+     0.020715921804840574
+    ],
+    "diff": 0.0005675712244901238,
+    "diff_lo": 0.00020892900822162548,
+    "diff_hi": 0.0010046682717674122
+   },
+   "free": {
+    "mean": 0.017391138260748354,
+    "lo": 0.016161637983501825,
+    "hi": 0.01877227315825287,
+    "per_seed": [
+     0.017301023477138137,
+     0.017266667740149122,
+     0.017605723564957806
+    ],
+    "diff": 0.000287877432624626,
+    "diff_lo": -3.2291650784071326e-05,
+    "diff_hi": 0.0006154739396582472
+   }
+  }
+ },
+ "act_arm": {
+  "full": {
+   "all": {
+    "mean": 0.01525026853153326,
+    "lo": 0.014000839068224264,
+    "hi": 0.01674957448457087,
+    "per_seed": [
+     0.015458282064833441,
+     0.015151292300862469,
+     0.015141231228903868
+    ]
+   },
+   "contact": {
+    "mean": 0.01631203734537808,
+    "lo": 0.014688248633313578,
+    "hi": 0.01828085636192923,
+    "per_seed": [
+     0.016566816508325408,
+     0.016189615055556383,
+     0.01617968047225244
+    ]
+   },
+   "free": {
+    "mean": 0.013124391838006672,
+    "lo": 0.012053879413003165,
+    "hi": 0.014287465013485682,
+    "per_seed": [
+     0.013238771087808767,
+     0.013072359377066191,
+     0.013062045049145056
+    ]
+   }
+  },
+  "no_force": {
+   "all": {
+    "mean": 0.017467514899903325,
+    "lo": 0.015216220393492496,
+    "hi": 0.02034902802045917,
+    "per_seed": [
+     0.017095642801604305,
+     0.017454783226797634,
+     0.01785211867130804
+    ],
+    "diff": 0.002217246368370066,
+    "diff_lo": 0.0009663873451770562,
+    "diff_hi": 0.0037812050746091805
+   },
+   "contact": {
+    "mean": 0.019437571943398044,
+    "lo": 0.01623328571618884,
+    "hi": 0.023311642704533113,
+    "per_seed": [
+     0.01887440617196701,
+     0.019440307559134277,
+     0.01999800209909284
+    ],
+    "diff": 0.003125534598019966,
+    "diff_lo": 0.001331426294297881,
+    "diff_hi": 0.005258927848674376
+   },
+   "free": {
+    "mean": 0.01352306079739715,
+    "lo": 0.012381058350072064,
+    "hi": 0.01473485740705437,
+    "per_seed": [
+     0.013534197463367478,
+     0.013479360472328483,
+     0.01355562445649549
+    ],
+    "diff": 0.0003986689593904781,
+    "diff_lo": 0.00010924735820267503,
+    "diff_hi": 0.0006820423201457875
+   }
+  },
+  "no_tactile_input": {
+   "all": {
+    "mean": 0.01560809819939745,
+    "lo": 0.014226580092656526,
+    "hi": 0.017314789378405585,
+    "per_seed": [
+     0.015669633485035868,
+     0.015713764364111437,
+     0.015440896749045053
+    ],
+    "diff": 0.0003578296678641915,
+    "diff_lo": -2.065048721139312e-06,
+    "diff_hi": 0.0007613479683786897
+   },
+   "contact": {
+    "mean": 0.016696324469309257,
+    "lo": 0.014857120347546552,
+    "hi": 0.018938491031534214,
+    "per_seed": [
+     0.01673003362994534,
+     0.01689983559323509,
+     0.016459104184747338
+    ],
+    "diff": 0.00038428712393117834,
+    "diff_lo": -0.00011003623330723418,
+    "diff_hi": 0.0009391584491190399
+   },
+   "free": {
+    "mean": 0.013429248308231787,
+    "lo": 0.012378258430776666,
+    "hi": 0.014597739533009805,
+    "per_seed": [
+     0.013546497144543637,
+     0.013339009003077702,
+     0.013402238777074025
+    ],
+    "diff": 0.00030485647022511497,
+    "diff_lo": 6.332401326365622e-05,
+    "diff_hi": 0.0005310378372847075
+   }
+  },
+  "no_torque_input": {
+   "all": {
+    "mean": 0.017111931222436604,
+    "lo": 0.015029919228075552,
+    "hi": 0.019924563736537445,
+    "per_seed": [
+     0.016826794137243684,
+     0.017391873746319092,
+     0.017117125783747033
+    ],
+    "diff": 0.001861662690903345,
+    "diff_lo": 0.0008100101766413376,
+    "diff_hi": 0.0033369172055274137
+   },
+   "contact": {
+    "mean": 0.018760082896691718,
+    "lo": 0.015810018162265262,
+    "hi": 0.02264117406587644,
+    "per_seed": [
+     0.01840794069000405,
+     0.019212528566931748,
+     0.018659779433139356
+    ],
+    "diff": 0.00244804555131364,
+    "diff_lo": 0.0008857181270314917,
+    "diff_hi": 0.004475484216836204
+   },
+   "free": {
+    "mean": 0.013811997012645563,
+    "lo": 0.012595552883595502,
+    "hi": 0.015111486560567055,
+    "per_seed": [
+     0.013661017782039453,
+     0.013746553221145933,
+     0.014028420034751302
+    ],
+    "diff": 0.000687605174638891,
+    "diff_lo": 0.0003574458149968105,
+    "diff_hi": 0.0010388176412683098
+   }
+  },
+  "no_force_output": {
+   "all": {
+    "mean": 0.015176422064621416,
+    "lo": 0.013992682438896738,
+    "hi": 0.016568279501838604,
+    "per_seed": [
+     0.015235474833483262,
+     0.015151661193205554,
+     0.015142130167175432
+    ],
+    "diff": -7.38464669118432e-05,
+    "diff_lo": -0.00041914332677977096,
+    "diff_hi": 0.00020185518630703374
+   },
+   "contact": {
+    "mean": 0.016229750258738598,
+    "lo": 0.01467891815062639,
+    "hi": 0.018014725337587082,
+    "per_seed": [
+     0.016269853065557515,
+     0.016217929909742607,
+     0.016201467800915668
+    ],
+    "diff": -8.228708663948064e-05,
+    "diff_lo": -0.000552821207624575,
+    "diff_hi": 0.00029037255393276175
+   },
+   "free": {
+    "mean": 0.013067445205149028,
+    "lo": 0.012030662303483717,
+    "hi": 0.01417357823792265,
+    "per_seed": [
+     0.013164439644669288,
+     0.013016774781054893,
+     0.01302112118972291
+    ],
+    "diff": -5.694663285764345e-05,
+    "diff_lo": -0.0002739735521072786,
+    "diff_hi": 0.00015010934800668892
+   }
+  },
+  "no_decision_supervision": {
+   "all": {
+    "mean": 0.015156532351507193,
+    "lo": 0.013863315746725788,
+    "hi": 0.01684314412679741,
+    "per_seed": [
+     0.01494771795705457,
+     0.015153281487636,
+     0.015368597609831008
+    ],
+    "diff": -9.373618002606575e-05,
+    "diff_lo": -0.0004659251087264009,
+    "diff_hi": 0.00037599035379120427
+   },
+   "contact": {
+    "mean": 0.016332994564546167,
+    "lo": 0.014624417055727165,
+    "hi": 0.01853825015257393,
+    "per_seed": [
+     0.016049858825999665,
+     0.016333192720231128,
+     0.01661593214740771
+    ],
+    "diff": 2.095721916808846e-05,
+    "diff_lo": -0.0004848672442608009,
+    "diff_hi": 0.0006520072232861755
+   },
+   "free": {
+    "mean": 0.01280101619120697,
+    "lo": 0.011758377248131736,
+    "hi": 0.01392773857012795,
+    "per_seed": [
+     0.012741008214102977,
+     0.012790859690068669,
+     0.012871180669449265
+    ],
+    "diff": -0.00032337564679970135,
+    "diff_lo": -0.0005433188026554695,
+    "diff_hi": -0.00013346683225984147
+   }
+  },
+  "full_residual_force": {
+   "all": {
+    "mean": 0.01516072961256259,
+    "lo": 0.013982975954139679,
+    "hi": 0.0165695963486568,
+    "per_seed": [
+     0.015143089869625962,
+     0.01523005560714864,
+     0.015109043360913166
+    ],
+    "diff": -8.953891897066878e-05,
+    "diff_lo": -0.0004008164658795394,
+    "diff_hi": 0.00015776331995193647
+   },
+   "contact": {
+    "mean": 0.016134114768370355,
+    "lo": 0.014535094372541232,
+    "hi": 0.017999016892315173,
+    "per_seed": [
+     0.016095716407814896,
+     0.016311743631454653,
+     0.015994884265841523
+    ],
+    "diff": -0.00017792257700772335,
+    "diff_lo": -0.000600419007878415,
+    "diff_hi": 0.00018053615264634602
+   },
+   "free": {
+    "mean": 0.013211814943404754,
+    "lo": 0.01210140919991844,
+    "hi": 0.014379475020394493,
+    "per_seed": [
+     0.013235738166728087,
+     0.01306429661088275,
+     0.013335410052603426
+    ],
+    "diff": 8.742310539808229e-05,
+    "diff_lo": -0.00013197396280787045,
+    "diff_hi": 0.00030218246976711373
+   }
+  },
+  "torque_arms_only": {
+   "all": {
+    "mean": 0.015186842676136647,
+    "lo": 0.013982050417251589,
+    "hi": 0.016698809711969,
+    "per_seed": [
+     0.015001744101167112,
+     0.015261486379360725,
+     0.01529729754788211
+    ],
+    "diff": -6.342585539661182e-05,
+    "diff_lo": -0.00041354154213092795,
+    "diff_hi": 0.00027127084307147564
+   },
+   "contact": {
+    "mean": 0.01620251795757739,
+    "lo": 0.014597825306490661,
+    "hi": 0.018175315771296732,
+    "per_seed": [
+     0.01604087631421542,
+     0.01618803491998105,
+     0.016378642638535695
+    ],
+    "diff": -0.00010951938780068976,
+    "diff_lo": -0.0005817880405598896,
+    "diff_hi": 0.00031883574967066274
+   },
+   "free": {
+    "mean": 0.013153254590998654,
+    "lo": 0.012065316293945172,
+    "hi": 0.0143272255321309,
+    "per_seed": [
+     0.01292119047743357,
+     0.01340634812116198,
+     0.013132225174400413
+    ],
+    "diff": 2.8862752991982293e-05,
+    "diff_lo": -0.00024983313949090654,
+    "diff_hi": 0.0003499751146483845
+   }
+  },
+  "torque_hands_only": {
+   "all": {
+    "mean": 0.016336353520353886,
+    "lo": 0.014772257114918506,
+    "hi": 0.018418111952885962,
+    "per_seed": [
+     0.016350177380336558,
+     0.016170353508356262,
+     0.016488529672368846
+    ],
+    "diff": 0.0010860849888206271,
+    "diff_lo": 0.0006088123794552339,
+    "diff_hi": 0.0017695720694566562
+   },
+   "contact": {
+    "mean": 0.017721600468265184,
+    "lo": 0.015605650336559208,
+    "hi": 0.02041830237934988,
+    "per_seed": [
+     0.01774780379997813,
+     0.017508884656118377,
+     0.017908112948699054
+    ],
+    "diff": 0.0014095631228871058,
+    "diff_lo": 0.0007322379748973053,
+    "diff_hi": 0.0023243193188392623
+   },
+   "free": {
+    "mean": 0.01356280793967358,
+    "lo": 0.012437469803737316,
+    "hi": 0.014767058855213117,
+    "per_seed": [
+     0.013551845584346097,
+     0.013490342442404235,
+     0.013646235792270409
+    ],
+    "diff": 0.00043841610166690803,
+    "diff_lo": 0.00020959796798979943,
+    "diff_hi": 0.0006807546478322004
+   }
+  }
+ },
+ "act_hand": {
+  "full": {
+   "all": {
+    "mean": 0.020295721077291416,
+    "lo": 0.019456286735562395,
+    "hi": 0.02115638141076773,
+    "per_seed": [
+     0.02034187446851471,
+     0.02027669985545494,
+     0.020268588907904606
+    ]
+   },
+   "contact": {
+    "mean": 0.021257889084921742,
+    "lo": 0.020314728777835394,
+    "hi": 0.022167111333282086,
+    "per_seed": [
+     0.021278992074163918,
+     0.021179006240783782,
+     0.02131566893981753
+    ]
+   },
+   "free": {
+    "mean": 0.018369265415751172,
+    "lo": 0.017091779336465125,
+    "hi": 0.01977116745014568,
+    "per_seed": [
+     0.018465574796716035,
+     0.01847009931305932,
+     0.01817212213747816
+    ]
+   }
+  },
+  "no_force": {
+   "all": {
+    "mean": 0.021559727145277565,
+    "lo": 0.02012617451053377,
+    "hi": 0.023047109075619302,
+    "per_seed": [
+     0.021472485181894076,
+     0.02154974568972237,
+     0.02165695056421624
+    ],
+    "diff": 0.0012640060679861495,
+    "diff_lo": 0.0004362754377609792,
+    "diff_hi": 0.002175701444340755
+   },
+   "contact": {
+    "mean": 0.022944625448150454,
+    "lo": 0.02125300752015399,
+    "hi": 0.024646763290520752,
+    "per_seed": [
+     0.02275437045014327,
+     0.022903054082681343,
+     0.02317645181162675
+    ],
+    "diff": 0.0016867363632287122,
+    "diff_lo": 0.0005775548930854105,
+    "diff_hi": 0.002866224681185482
+   },
+   "free": {
+    "mean": 0.018786879622735526,
+    "lo": 0.017334220337443012,
+    "hi": 0.020372766977477783,
+    "per_seed": [
+     0.018905890665261074,
+     0.018840147579256606,
+     0.018614600623688894
+    ],
+    "diff": 0.00041761420698435345,
+    "diff_lo": -9.430839717371467e-05,
+    "diff_hi": 0.0010224138689710683
+   }
+  },
+  "no_tactile_input": {
+   "all": {
+    "mean": 0.020656756142918828,
+    "lo": 0.019682722984750683,
+    "hi": 0.02160395055888829,
+    "per_seed": [
+     0.020583809399241454,
+     0.020586470085785333,
+     0.020799988943729697
+    ],
+    "diff": 0.00036103506562741236,
+    "diff_lo": 2.1701098205854864e-05,
+    "diff_hi": 0.0007534169773812269
+   },
+   "contact": {
+    "mean": 0.02166897905083301,
+    "lo": 0.020552653369326677,
+    "hi": 0.022713791425380214,
+    "per_seed": [
+     0.021592716290172675,
+     0.02162279090715639,
+     0.021791429955169955
+    ],
+    "diff": 0.00041108996591126754,
+    "diff_lo": -6.586726897987932e-05,
+    "diff_hi": 0.0009130837785760864
+   },
+   "free": {
+    "mean": 0.01863008041037752,
+    "lo": 0.017299490577805363,
+    "hi": 0.020079756145994488,
+    "per_seed": [
+     0.018563773005817564,
+     0.018511545438873404,
+     0.0188149227864416
+    ],
+    "diff": 0.00026081499462634813,
+    "diff_lo": -0.00013556921959443586,
+    "diff_hi": 0.0006621618284181831
+   }
+  },
+  "no_torque_input": {
+   "all": {
+    "mean": 0.02146418205555745,
+    "lo": 0.020307818365151213,
+    "hi": 0.02270629189745657,
+    "per_seed": [
+     0.021260444510930846,
+     0.021646477638291948,
+     0.021485624017449554
+    ],
+    "diff": 0.0011684609782660338,
+    "diff_lo": 0.0006375701008660737,
+    "diff_hi": 0.0018696318972536872
+   },
+   "contact": {
+    "mean": 0.022686778192733268,
+    "lo": 0.02133872292061193,
+    "hi": 0.024057595327744704,
+    "per_seed": [
+     0.02242860902222926,
+     0.022950580637780594,
+     0.02268114491818995
+    ],
+    "diff": 0.0014288891078115262,
+    "diff_lo": 0.0007229764643044797,
+    "diff_hi": 0.002335793071635648
+   },
+   "free": {
+    "mean": 0.019016296414420528,
+    "lo": 0.017594104280761084,
+    "hi": 0.020590796061490273,
+    "per_seed": [
+     0.018921542033863807,
+     0.019035398713745363,
+     0.019091948495652412
+    ],
+    "diff": 0.0006470309986693554,
+    "diff_lo": 0.000251040737710267,
+    "diff_hi": 0.001080667578691362
+   }
+  },
+  "no_force_output": {
+   "all": {
+    "mean": 0.020439702081486873,
+    "lo": 0.019546472800317523,
+    "hi": 0.021356568897418174,
+    "per_seed": [
+     0.02039382492072715,
+     0.02024384949778461,
+     0.02068143182594886
+    ],
+    "diff": 0.00014398100419545784,
+    "diff_lo": -0.0001312570685771208,
+    "diff_hi": 0.0004314281626800324
+   },
+   "contact": {
+    "mean": 0.02151345207695501,
+    "lo": 0.020488437453254748,
+    "hi": 0.022527660756941275,
+    "per_seed": [
+     0.02143083220598342,
+     0.02122324910102335,
+     0.021886274923858254
+    ],
+    "diff": 0.0002555629920332689,
+    "diff_lo": -0.00013578152994790725,
+    "diff_hi": 0.0006567830358096836
+   },
+   "free": {
+    "mean": 0.018289836630293082,
+    "lo": 0.01703093109217171,
+    "hi": 0.019676789027075908,
+    "per_seed": [
+     0.018317525833771865,
+     0.018282892683998665,
+     0.01826909137310872
+    ],
+    "diff": -7.942878545809037e-05,
+    "diff_lo": -0.0003815518256061689,
+    "diff_hi": 0.00023624255868851554
+   }
+  },
+  "no_decision_supervision": {
+   "all": {
+    "mean": 0.02031437943226264,
+    "lo": 0.01946725720676098,
+    "hi": 0.021200536568497127,
+    "per_seed": [
+     0.02032603243776849,
+     0.020252533442226273,
+     0.020364572416793153
+    ],
+    "diff": 1.8658354971223812e-05,
+    "diff_lo": -0.00017209742914089281,
+    "diff_hi": 0.0002416581279118249
+   },
+   "contact": {
+    "mean": 0.021403374817377235,
+    "lo": 0.020444850978360574,
+    "hi": 0.022328875973664286,
+    "per_seed": [
+     0.021478784992709082,
+     0.021164024417093245,
+     0.02156731504232938
+    ],
+    "diff": 0.00014548573245549284,
+    "diff_lo": -0.00014524034704996135,
+    "diff_hi": 0.0004862534002047523
+   },
+   "free": {
+    "mean": 0.018133989616338463,
+    "lo": 0.016839173589402054,
+    "hi": 0.01949793478309929,
+    "per_seed": [
+     0.01801798782579932,
+     0.01842754348719758,
+     0.017956437536018492
+    ],
+    "diff": -0.0002352757994127097,
+    "diff_lo": -0.0006331983760475214,
+    "diff_hi": 0.00015477859632880638
+   }
+  },
+  "full_residual_force": {
+   "all": {
+    "mean": 0.020510509365174484,
+    "lo": 0.019594688544111564,
+    "hi": 0.021419521025055305,
+    "per_seed": [
+     0.02041809809919859,
+     0.020417815725570675,
+     0.02069561427075418
+    ],
+    "diff": 0.00021478828788306856,
+    "diff_lo": -2.8412914545681236e-05,
+    "diff_hi": 0.0005107725492947205
+   },
+   "contact": {
+    "mean": 0.0215136375024452,
+    "lo": 0.020474390377030534,
+    "hi": 0.022510672777577644,
+    "per_seed": [
+     0.02139332048289073,
+     0.021334606123996236,
+     0.021812985900448632
+    ],
+    "diff": 0.00025574841752345687,
+    "diff_lo": -0.00010012830215862687,
+    "diff_hi": 0.0007050198665016877
+   },
+   "free": {
+    "mean": 0.0185020432096068,
+    "lo": 0.017215302999799342,
+    "hi": 0.01992300575895029,
+    "per_seed": [
+     0.018465504926877766,
+     0.018582215248848906,
+     0.018458409453093724
+    ],
+    "diff": 0.00013277779385562766,
+    "diff_lo": -0.00018755806696691408,
+    "diff_hi": 0.00047188430151873375
+   }
+  },
+  "torque_arms_only": {
+   "all": {
+    "mean": 0.02105259136700216,
+    "lo": 0.02010067753081194,
+    "hi": 0.02203918652939931,
+    "per_seed": [
+     0.021026230139415836,
+     0.0210916326155123,
+     0.02103991134607834
+    ],
+    "diff": 0.0007568702897107447,
+    "diff_lo": 0.00045986318176433386,
+    "diff_hi": 0.0010732222415308942
+   },
+   "contact": {
+    "mean": 0.02213623541256007,
+    "lo": 0.021155323053592,
+    "hi": 0.023090774270608884,
+    "per_seed": [
+     0.022145190064235234,
+     0.02213351775170055,
+     0.022129998421744426
+    ],
+    "diff": 0.0008783463276383283,
+    "diff_lo": 0.0005676773774087578,
+    "diff_hi": 0.0011677635776522531
+   },
+   "free": {
+    "mean": 0.018882916019137663,
+    "lo": 0.017394803338137216,
+    "hi": 0.020737857295559967,
+    "per_seed": [
+     0.01878584523250757,
+     0.019005567080837348,
+     0.018857335744068074
+    ],
+    "diff": 0.000513650603386491,
+    "diff_lo": 3.772182749366575e-05,
+    "diff_hi": 0.001135860587180815
+   }
+  },
+  "torque_hands_only": {
+   "all": {
+    "mean": 0.020575505103396303,
+    "lo": 0.019626969844610577,
+    "hi": 0.021521562302236754,
+    "per_seed": [
+     0.02062947828227779,
+     0.020401634419615594,
+     0.02069540260829553
+    ],
+    "diff": 0.0002797840261048873,
+    "diff_lo": 2.3599777334378268e-05,
+    "diff_hi": 0.0005645101489383903
+   },
+   "contact": {
+    "mean": 0.021557553836240414,
+    "lo": 0.020520064938847723,
+    "hi": 0.022554750172906503,
+    "per_seed": [
+     0.02169607031746376,
+     0.021367274659458303,
+     0.02160931653179918
+    ],
+    "diff": 0.00029966475131867204,
+    "diff_lo": -2.4451956081219704e-05,
+    "diff_hi": 0.0006389439516877712
+   },
+   "free": {
+    "mean": 0.018609244194394185,
+    "lo": 0.017237343075488278,
+    "hi": 0.02009570465488899,
+    "per_seed": [
+     0.01849394452056161,
+     0.018468226644358533,
+     0.018865561418262414
+    ],
+    "diff": 0.00023997877864301298,
+    "diff_lo": -0.00014370557487993182,
+    "diff_hi": 0.0006263751503768224
+   }
+  }
+ },
+ "force": {
+  "full": {
+   "all": {
+    "mean": 0.4763565731486908,
+    "lo": 0.4093055577284006,
+    "hi": 0.5522342260265477,
+    "per_seed": [
+     0.47714691117274677,
+     0.47581324878262127,
+     0.47610955949070427
+    ]
+   },
+   "contact": {
+    "mean": 0.6925809455526162,
+    "lo": 0.6136743539176168,
+    "hi": 0.7748576447529377,
+    "per_seed": [
+     0.6930295762141035,
+     0.6920878416524848,
+     0.6926254187912599
+    ]
+   },
+   "free": {
+    "mean": 0.043431488260013244,
+    "lo": 0.03803901700265703,
+    "hi": 0.049978731667640316,
+    "per_seed": [
+     0.04490599378703102,
+     0.04278761232689457,
+     0.04260085866611413
+    ]
+   }
+  },
+  "no_tactile_input": {
+   "all": {
+    "mean": 0.7354923161888535,
+    "lo": 0.6041290871814048,
+    "hi": 0.8878743624062387,
+    "per_seed": [
+     0.7424775151044507,
+     0.7317154417861751,
+     0.7322839916759346
+    ],
+    "diff": 0.2591357430401627,
+    "diff_lo": 0.18960120901830443,
+    "diff_hi": 0.3426539967735347
+   },
+   "contact": {
+    "mean": 1.0793254991156844,
+    "lo": 0.9137250914067144,
+    "hi": 1.248661020520326,
+    "per_seed": [
+     1.0897966468724587,
+     1.0740348246564555,
+     1.0741450258181393
+    ],
+    "diff": 0.38674455356306825,
+    "diff_lo": 0.29085450455148043,
+    "diff_hi": 0.4938969869693555
+   },
+   "free": {
+    "mean": 0.04706848934998673,
+    "lo": 0.04162892276496339,
+    "hi": 0.05333129604162465,
+    "per_seed": [
+     0.047074111073587846,
+     0.04632254994645082,
+     0.04780880702992155
+    ],
+    "diff": 0.003637001089973488,
+    "diff_lo": 0.0010178538488561206,
+    "diff_hi": 0.006129836907554106
+   }
+  },
+  "no_torque_input": {
+   "all": {
+    "mean": 0.5070752927108185,
+    "lo": 0.4226714463365517,
+    "hi": 0.6069340939133578,
+    "per_seed": [
+     0.49687885643597146,
+     0.5083467281618814,
+     0.5160002935346026
+    ],
+    "diff": 0.03071871956212774,
+    "diff_lo": 0.007978696553383492,
+    "diff_hi": 0.0665635526364372
+   },
+   "contact": {
+    "mean": 0.7384831242883614,
+    "lo": 0.6349174573242016,
+    "hi": 0.8496873895440059,
+    "per_seed": [
+     0.7234936618207785,
+     0.7405635143638404,
+     0.7513921966804651
+    ],
+    "diff": 0.0459021787357452,
+    "diff_lo": 0.01212423979863353,
+    "diff_hi": 0.09433545699202574
+   },
+   "free": {
+    "mean": 0.04374984046964547,
+    "lo": 0.03783230843496357,
+    "hi": 0.05075638368428887,
+    "per_seed": [
+     0.04315001556794888,
+     0.04340158455311244,
+     0.044697921287875114
+    ],
+    "diff": 0.00031835220963222916,
+    "diff_lo": -0.0022521724053383733,
+    "diff_hi": 0.00345224149435928
+   }
+  },
+  "no_decision_supervision": {
+   "all": {
+    "mean": 0.48301007668227797,
+    "lo": 0.4117955437665931,
+    "hi": 0.5652589159600871,
+    "per_seed": [
+     0.48131831420319576,
+     0.48666642180143777,
+     0.48104549404220026
+    ],
+    "diff": 0.0066535035335871795,
+    "diff_lo": -0.0010052622803446998,
+    "diff_hi": 0.016396533600248953
+   },
+   "contact": {
+    "mean": 0.7026286744185684,
+    "lo": 0.617448238561496,
+    "hi": 0.7924632687752123,
+    "per_seed": [
+     0.7006547137795098,
+     0.7070318468892054,
+     0.7001994625869898
+    ],
+    "diff": 0.010047728865952177,
+    "diff_lo": -0.0007827498123877326,
+    "diff_hi": 0.023348397515902133
+   },
+   "free": {
+    "mean": 0.04328906368517967,
+    "lo": 0.037606112318155804,
+    "hi": 0.0506615154859367,
+    "per_seed": [
+     0.04216231920571015,
+     0.04545010884836855,
+     0.04225476300146029
+    ],
+    "diff": -0.00014242457483357174,
+    "diff_lo": -0.0028975844999944355,
+    "diff_hi": 0.0031933376225500485
+   }
+  },
+  "full_residual_force": {
+   "all": {
+    "mean": 0.37420699626977977,
+    "lo": 0.3330673042576359,
+    "hi": 0.41855533866542965,
+    "per_seed": [
+     0.3714056347439671,
+     0.3750543899349335,
+     0.37616096413043876
+    ],
+    "diff": -0.10214957687891102,
+    "diff_lo": -0.139556975457405,
+    "diff_hi": -0.06868472411485058
+   },
+   "contact": {
+    "mean": 0.5455388629871761,
+    "lo": 0.4970197662124471,
+    "hi": 0.5912926166458068,
+    "per_seed": [
+     0.5405841819655881,
+     0.5469948017443059,
+     0.5490376052516345
+    ],
+    "diff": -0.14704208256544005,
+    "diff_lo": -0.19432754082095471,
+    "diff_hi": -0.10067129453131261
+   },
+   "free": {
+    "mean": 0.031165820485019535,
+    "lo": 0.026627527062042085,
+    "hi": 0.036326028774998305,
+    "per_seed": [
+     0.032675841691582094,
+     0.03079478334760796,
+     0.030026836415868542
+    ],
+    "diff": -0.012265667774993709,
+    "diff_lo": -0.016316022476036956,
+    "diff_hi": -0.009522348689461564
+   }
+  },
+  "torque_arms_only": {
+   "all": {
+    "mean": 0.4851138805434816,
+    "lo": 0.4119283686983752,
+    "hi": 0.570233808123699,
+    "per_seed": [
+     0.4858289228533227,
+     0.4800988778196538,
+     0.48941384095746826
+    ],
+    "diff": 0.008757307394790803,
+    "diff_lo": -0.00220488271268755,
+    "diff_hi": 0.022970951670679644
+   },
+   "contact": {
+    "mean": 0.7058217460683137,
+    "lo": 0.6178438892098079,
+    "hi": 0.7969331054716167,
+    "per_seed": [
+     0.7072529129303947,
+     0.6984093026850192,
+     0.7118030225895275
+    ],
+    "diff": 0.013240800515697537,
+    "diff_lo": -0.003206358851721721,
+    "diff_hi": 0.03331892028870005
+   },
+   "free": {
+    "mean": 0.04321193232350276,
+    "lo": 0.03778955261753731,
+    "hi": 0.04970900412623137,
+    "per_seed": [
+     0.04249314791380034,
+     0.04299709245586001,
+     0.04414555660084793
+    ],
+    "diff": -0.0002195559365104835,
+    "diff_lo": -0.0025425637516805085,
+    "diff_hi": 0.0026636483772129738
+   }
+  },
+  "torque_hands_only": {
+   "all": {
+    "mean": 0.48489718715281915,
+    "lo": 0.41410680720914816,
+    "hi": 0.5675794194058769,
+    "per_seed": [
+     0.48085678271403354,
+     0.4826845753751685,
+     0.4911502033692554
+    ],
+    "diff": 0.008540614004128366,
+    "diff_lo": -6.556782852025768e-06,
+    "diff_hi": 0.01860678318100374
+   },
+   "contact": {
+    "mean": 0.7053935978129111,
+    "lo": 0.6193873233786226,
+    "hi": 0.7932529740737645,
+    "per_seed": [
+     0.6989448149785158,
+     0.7027348127816,
+     0.7145011656786175
+    ],
+    "diff": 0.012812652260294932,
+    "diff_lo": 1.6636092841783467e-05,
+    "diff_hi": 0.02666806605736324
+   },
+   "free": {
+    "mean": 0.04341861449522517,
+    "lo": 0.03803578895976184,
+    "hi": 0.049589472660791716,
+    "per_seed": [
+     0.04420027248063114,
+     0.042099332140009764,
+     0.04395623886503461
+    ],
+    "diff": -1.287376478807667e-05,
+    "diff_lo": -0.0028008864976743343,
+    "diff_hi": 0.002591589594903711
+   }
+  }
+ }
+}, Z = {
+ "act": {
+  "full": {
+   "all": {
+    "mean": 0.03145203749343212,
+    "lo": 0.029981900143217975,
+    "hi": 0.03314895677802369,
+    "per_seed": [
+     0.03246457072499526,
+     0.03163796349307682,
+     0.030253578262224266
+    ]
+   },
+   "contact": {
+    "mean": 0.03316795143814238,
+    "lo": 0.030927295470323628,
+    "hi": 0.035315122197317625,
+    "per_seed": [
+     0.03401728186542499,
+     0.03453816857369144,
+     0.030948403875310712
+    ]
+   },
+   "free": {
+    "mean": 0.028016429463142044,
+    "lo": 0.025647202516006967,
+    "hi": 0.03048337435487479,
+    "per_seed": [
+     0.029355727837374838,
+     0.02583116420971876,
+     0.028862396342332536
+    ]
+   }
+  },
+  "no_force": {
+   "all": {
+    "mean": 0.02057195101975452,
+    "lo": 0.018989741736598946,
+    "hi": 0.022286220567677886,
+    "per_seed": [
+     0.020416005241045004,
+     0.020561305702347595,
+     0.020738542115870957
+    ],
+    "diff": -0.010880086473677598,
+    "diff_lo": -0.012100808273390187,
+    "diff_hi": -0.009335573280305353
+   },
+   "contact": {
+    "mean": 0.022098094475824167,
+    "lo": 0.020170351104393174,
+    "hi": 0.024084980277638057,
+    "per_seed": [
+     0.021817826546420976,
+     0.022067217882578424,
+     0.02240923899847309
+    ],
+    "diff": -0.01106985696231821,
+    "diff_lo": -0.013053615931465026,
+    "diff_hi": -0.008675569450498789
+   },
+   "free": {
+    "mean": 0.017516302029191157,
+    "lo": 0.016170571943152308,
+    "hi": 0.018928896080638337,
+    "per_seed": [
+     0.017609274432295385,
+     0.017546163832755608,
+     0.017393467822522483
+    ],
+    "diff": -0.010500127433950887,
+    "diff_lo": -0.012286145686386332,
+    "diff_hi": -0.008509780466619982
+   }
+  },
+  "no_tactile_input": {
+   "all": {
+    "mean": 0.028246932994478762,
+    "lo": 0.02655374364360253,
+    "hi": 0.02983335070735382,
+    "per_seed": [
+     0.028588239796934343,
+     0.02734351978407901,
+     0.028809039402422937
+    ],
+    "diff": -0.0032051044989533546,
+    "diff_lo": -0.00451734256912308,
+    "diff_hi": -0.0017466928632304123
+   },
+   "contact": {
+    "mean": 0.029217393842764783,
+    "lo": 0.027469641576596607,
+    "hi": 0.030983476698850314,
+    "per_seed": [
+     0.030181852392979665,
+     0.028637936829915167,
+     0.02883239230539952
+    ],
+    "diff": -0.003950557595377595,
+    "diff_lo": -0.00586518435145263,
+    "diff_hi": -0.0016741009485707198
+   },
+   "free": {
+    "mean": 0.026303873382583984,
+    "lo": 0.023758171651696514,
+    "hi": 0.029126133866754934,
+    "per_seed": [
+     0.025397503892594347,
+     0.024751834104894233,
+     0.02876228215026337
+    ],
+    "diff": -0.0017125560805580607,
+    "diff_lo": -0.004292687721817173,
+    "diff_hi": 0.0010930081430615426
+   }
+  },
+  "no_torque_input": {
+   "all": {
+    "mean": 0.025217860163237422,
+    "lo": 0.02369070800613589,
+    "hi": 0.027047457545841338,
+    "per_seed": [
+     0.025164903546006683,
+     0.025756598852599087,
+     0.0247320780911065
+    ],
+    "diff": -0.006234177330194695,
+    "diff_lo": -0.007448794494395295,
+    "diff_hi": -0.004736100014568403
+   },
+   "contact": {
+    "mean": 0.028800063708755357,
+    "lo": 0.027038313605631057,
+    "hi": 0.030826692728934294,
+    "per_seed": [
+     0.028710329389279834,
+     0.0296580873471807,
+     0.028031774389805524
+    ],
+    "diff": -0.00436788772938702,
+    "diff_lo": -0.0063578967268974424,
+    "diff_hi": -0.001894549093674431
+   },
+   "free": {
+    "mean": 0.018045561514430163,
+    "lo": 0.016630062961680608,
+    "hi": 0.019690756863639875,
+    "per_seed": [
+     0.018066241322590857,
+     0.017945026924187372,
+     0.018125416296512258
+    ],
+    "diff": -0.009970867948711881,
+    "diff_lo": -0.011621851699268878,
+    "diff_hi": -0.007970686387837109
+   }
+  },
+  "no_force_output": {
+   "all": {
+    "mean": 0.030624623546171775,
+    "lo": 0.02908368237396609,
+    "hi": 0.03203830934569436,
+    "per_seed": [
+     0.030376962868476177,
+     0.030051160812929724,
+     0.031445746957109416
+    ],
+    "diff": -0.0008274139472603421,
+    "diff_lo": -0.002079774909033662,
+    "diff_hi": 0.0004944914260647092
+   },
+   "contact": {
+    "mean": 0.03199238425357519,
+    "lo": 0.03053260204699675,
+    "hi": 0.03342886818562336,
+    "per_seed": [
+     0.03211794758732444,
+     0.03268027631569588,
+     0.031178928857705245
+    ],
+    "diff": -0.0011755671845671903,
+    "diff_lo": -0.00300368035219528,
+    "diff_hi": 0.0009810511269891028
+   },
+   "free": {
+    "mean": 0.027886088968516215,
+    "lo": 0.024314939701385825,
+    "hi": 0.03196890721729899,
+    "per_seed": [
+     0.026891158059251113,
+     0.024787137892835844,
+     0.031979970953461695
+    ],
+    "diff": -0.0001303404946258295,
+    "diff_lo": -0.0037765540152368713,
+    "diff_hi": 0.0038395088846867776
+   }
+  },
+  "no_decision_supervision": {
+   "all": {
+    "mean": 0.031053528596145616,
+    "lo": 0.02947617859889864,
+    "hi": 0.03297202832549596,
+    "per_seed": [
+     0.03143816596928811,
+     0.030913886817319977,
+     0.03080853300182876
+    ],
+    "diff": -0.00039850889728650085,
+    "diff_lo": -0.0016564113859502704,
+    "diff_hi": 0.0012148037905333248
+   },
+   "contact": {
+    "mean": 0.03349070420913144,
+    "lo": 0.0309936862943264,
+    "hi": 0.036439896345716274,
+    "per_seed": [
+     0.03525432131249669,
+     0.034107071230460584,
+     0.031110720084437028
+    ],
+    "diff": 0.00032275277098905986,
+    "diff_lo": -0.002330864475100598,
+    "diff_hi": 0.0032489265619410645
+   },
+   "free": {
+    "mean": 0.026173808297226406,
+    "lo": 0.023063504979793002,
+    "hi": 0.03022082103887363,
+    "per_seed": [
+     0.02379744833168214,
+     0.024520483438437036,
+     0.03020349312156005
+    ],
+    "diff": -0.001842621165915638,
+    "diff_lo": -0.005267694097190586,
+    "diff_hi": 0.0023526124270906047
+   }
+  },
+  "full_residual_force": {
+   "all": {
+    "mean": 0.031244512432494802,
+    "lo": 0.029755665754569838,
+    "hi": 0.03281843223625915,
+    "per_seed": [
+     0.030908869920058583,
+     0.03242378306630621,
+     0.03040088431111962
+    ],
+    "diff": -0.0002075250609373143,
+    "diff_lo": -0.0016798053449761992,
+    "diff_hi": 0.0013372890154324452
+   },
+   "contact": {
+    "mean": 0.03299365824362542,
+    "lo": 0.03047504686392232,
+    "hi": 0.0357958192729148,
+    "per_seed": [
+     0.03170486880452874,
+     0.035971755107681164,
+     0.03130435081866635
+    ],
+    "diff": -0.00017429319451695707,
+    "diff_lo": -0.002949469992034227,
+    "diff_hi": 0.0030651961465646754
+   },
+   "free": {
+    "mean": 0.027742367459902207,
+    "lo": 0.0252323728302019,
+    "hi": 0.030225857565869384,
+    "per_seed": [
+     0.02931511857371739,
+     0.025320022837438397,
+     0.02859196096855083
+    ],
+    "diff": -0.0002740620032398375,
+    "diff_lo": -0.0029607946148257464,
+    "diff_hi": 0.0025183497649150593
+   }
+  },
+  "torque_arms_only": {
+   "all": {
+    "mean": 0.029271467844220564,
+    "lo": 0.0278874770138558,
+    "hi": 0.03077441516136931,
+    "per_seed": [
+     0.030204992124532478,
+     0.0288633164518004,
+     0.028746094956328818
+    ],
+    "diff": -0.002180569649211553,
+    "diff_lo": -0.003612735311869061,
+    "diff_hi": -0.0008347207825599195
+   },
+   "contact": {
+    "mean": 0.031214972092728274,
+    "lo": 0.02928447241114722,
+    "hi": 0.03300826996362202,
+    "per_seed": [
+     0.03217296202496369,
+     0.032042316468255415,
+     0.02942963778496571
+    ],
+    "diff": -0.001952979345414104,
+    "diff_lo": -0.004321859891519645,
+    "diff_hi": 0.0004423995883808523
+   },
+   "free": {
+    "mean": 0.02538017782722418,
+    "lo": 0.022235488529023434,
+    "hi": 0.028257307129539715,
+    "per_seed": [
+     0.026264716906108133,
+     0.02249831311436946,
+     0.027377503461194944
+    ],
+    "diff": -0.002636251635917866,
+    "diff_lo": -0.00596206889929849,
+    "diff_hi": 0.00016316343834390837
+   }
+  },
+  "torque_hands_only": {
+   "all": {
+    "mean": 0.03140509630252925,
+    "lo": 0.02896480581799412,
+    "hi": 0.03367476085764015,
+    "per_seed": [
+     0.03366678204125832,
+     0.03127149722338116,
+     0.029277009642948274
+    ],
+    "diff": -4.6941190902864693e-05,
+    "diff_lo": -0.002317504507095563,
+    "diff_hi": 0.002348956296537109
+   },
+   "contact": {
+    "mean": 0.03488897231669889,
+    "lo": 0.03190484378869441,
+    "hi": 0.0371657238175359,
+    "per_seed": [
+     0.036566360816557876,
+     0.03608966174672546,
+     0.032010894386813336
+    ],
+    "diff": 0.001721020878556509,
+    "diff_lo": -0.0014469923618596007,
+    "diff_hi": 0.004864759739521951
+   },
+   "free": {
+    "mean": 0.024429669330964427,
+    "lo": 0.021238964471649455,
+    "hi": 0.02811118535268238,
+    "per_seed": [
+     0.0278612367482746,
+     0.021624553809528636,
+     0.023803217435090045
+    ],
+    "diff": -0.0035867601321776174,
+    "diff_lo": -0.007081710632307712,
+    "diff_hi": 0.00018044059048129233
+   }
+  }
+ },
+ "act_arm": {
+  "full": {
+   "all": {
+    "mean": 0.025143624721267605,
+    "lo": 0.023924590910122057,
+    "hi": 0.026478239740954316,
+    "per_seed": [
+     0.02458203739502841,
+     0.024914430081202425,
+     0.02593440668757198
+    ]
+   },
+   "contact": {
+    "mean": 0.026381212286907315,
+    "lo": 0.024711253283588818,
+    "hi": 0.027954297454591846,
+    "per_seed": [
+     0.025545457794779108,
+     0.02717319132943299,
+     0.026424987736509843
+    ]
+   },
+   "free": {
+    "mean": 0.022665723197239335,
+    "lo": 0.02034211726621221,
+    "hi": 0.025291909618061666,
+    "per_seed": [
+     0.022653074190240385,
+     0.020391931556814433,
+     0.024952163844663183
+    ]
+   }
+  },
+  "no_force": {
+   "all": {
+    "mean": 0.017467514899903325,
+    "lo": 0.015216220393492496,
+    "hi": 0.02034902802045917,
+    "per_seed": [
+     0.017095642801604305,
+     0.017454783226797634,
+     0.01785211867130804
+    ],
+    "diff": -0.007676109821364279,
+    "diff_lo": -0.009632773343261694,
+    "diff_hi": -0.005568134236628007
+   },
+   "contact": {
+    "mean": 0.019437571943398044,
+    "lo": 0.01623328571618884,
+    "hi": 0.023311642704533113,
+    "per_seed": [
+     0.01887440617196701,
+     0.019440307559134277,
+     0.01999800209909284
+    ],
+    "diff": -0.0069436403435092706,
+    "diff_lo": -0.009595576127920358,
+    "diff_hi": -0.00411941374160261
+   },
+   "free": {
+    "mean": 0.01352306079739715,
+    "lo": 0.012381058350072064,
+    "hi": 0.01473485740705437,
+    "per_seed": [
+     0.013534197463367478,
+     0.013479360472328483,
+     0.01355562445649549
+    ],
+    "diff": -0.009142662399842185,
+    "diff_lo": -0.011484487044139922,
+    "diff_hi": -0.006997619972017548
+   }
+  },
+  "no_tactile_input": {
+   "all": {
+    "mean": 0.024546804031214665,
+    "lo": 0.022977345140236662,
+    "hi": 0.02662071556400854,
+    "per_seed": [
+     0.02546627548497083,
+     0.024239368122566003,
+     0.023934768486107164
+    ],
+    "diff": -0.0005968206900529398,
+    "diff_lo": -0.0019347135021090989,
+    "diff_hi": 0.0009387930079412672
+   },
+   "contact": {
+    "mean": 0.025636227362228352,
+    "lo": 0.02323409999201913,
+    "hi": 0.028778612600918387,
+    "per_seed": [
+     0.027120121077330493,
+     0.026013636497583204,
+     0.023774924511771357
+    ],
+    "diff": -0.0007449849246789625,
+    "diff_lo": -0.002799314496081655,
+    "diff_hi": 0.001820230512823615
+   },
+   "free": {
+    "mean": 0.02236555738073187,
+    "lo": 0.020386627889725225,
+    "hi": 0.024485349325195457,
+    "per_seed": [
+     0.022154940895327345,
+     0.02068692267744895,
+     0.024254808569419323
+    ],
+    "diff": -0.0003001658165074639,
+    "diff_lo": -0.0031061259996343466,
+    "diff_hi": 0.002358954894543299
+   }
+  },
+  "no_torque_input": {
+   "all": {
+    "mean": 0.019336480332005287,
+    "lo": 0.017908802031847252,
+    "hi": 0.02118987303351316,
+    "per_seed": [
+     0.01907261134799121,
+     0.019327294452887545,
+     0.019609535195137116
+    ],
+    "diff": -0.005807144389262317,
+    "diff_lo": -0.006971975362330259,
+    "diff_hi": -0.004609236355971782
+   },
+   "contact": {
+    "mean": 0.022024747623698132,
+    "lo": 0.02032546849400873,
+    "hi": 0.02427712094790167,
+    "per_seed": [
+     0.02168713157604727,
+     0.022060558649477674,
+     0.022326552645569445
+    ],
+    "diff": -0.004356464663209183,
+    "diff_lo": -0.0056787422501932035,
+    "diff_hi": -0.0028940792075177503
+   },
+   "free": {
+    "mean": 0.013954023523272059,
+    "lo": 0.012711098247215672,
+    "hi": 0.01534432832973828,
+    "per_seed": [
+     0.013837811130558432,
+     0.013854744706638479,
+     0.014169514732619265
+    ],
+    "diff": -0.008711699673967276,
+    "diff_lo": -0.01099274022515781,
+    "diff_hi": -0.006590788486008716
+   }
+  },
+  "no_force_output": {
+   "all": {
+    "mean": 0.02532349020657659,
+    "lo": 0.023817971983001368,
+    "hi": 0.027142351392673583,
+    "per_seed": [
+     0.02427418697170452,
+     0.02545025209055738,
+     0.02624603155746787
+    ],
+    "diff": 0.00017986548530898525,
+    "diff_lo": -0.001097705346819518,
+    "diff_hi": 0.001510338131427381
+   },
+   "contact": {
+    "mean": 0.026178147793925785,
+    "lo": 0.024019957323028876,
+    "hi": 0.02878384469580041,
+    "per_seed": [
+     0.02439241263740153,
+     0.027444794195711775,
+     0.026697236548664054
+    ],
+    "diff": -0.00020306449298152993,
+    "diff_lo": -0.0020527415583056425,
+    "diff_hi": 0.0017398450380330022
+   },
+   "free": {
+    "mean": 0.02361229222995485,
+    "lo": 0.02142023655812696,
+    "hi": 0.02577388810650886,
+    "per_seed": [
+     0.024037475190378205,
+     0.021456773924391444,
+     0.025342627575094895
+    ],
+    "diff": 0.0009465690327155156,
+    "diff_lo": -0.0020163009284172788,
+    "diff_hi": 0.003678965374979928
+   }
+  },
+  "no_decision_supervision": {
+   "all": {
+    "mean": 0.025099014741845293,
+    "lo": 0.023570100283118952,
+    "hi": 0.02667873297320186,
+    "per_seed": [
+     0.024909788063194806,
+     0.024667540026812148,
+     0.025719716135528925
+    ],
+    "diff": -4.4609979422311624e-05,
+    "diff_lo": -0.0011459764087737281,
+    "diff_hi": 0.0009785253576408532
+   },
+   "contact": {
+    "mean": 0.027211745224271094,
+    "lo": 0.025397394545240128,
+    "hi": 0.02929746095968559,
+    "per_seed": [
+     0.027657138386460802,
+     0.02748105965123747,
+     0.026497037635114996
+    ],
+    "diff": 0.0008305329373637788,
+    "diff_lo": -0.0003876447479334123,
+    "diff_hi": 0.0021432214814466927
+   },
+   "free": {
+    "mean": 0.020868899453350274,
+    "lo": 0.018419414630212298,
+    "hi": 0.02403136067775809,
+    "per_seed": [
+     0.01940903503200102,
+     0.019034302623006042,
+     0.024163360705043765
+    ],
+    "diff": -0.001796823743889061,
+    "diff_lo": -0.004982439152779084,
+    "diff_hi": 0.0019046881268194793
+   }
+  },
+  "full_residual_force": {
+   "all": {
+    "mean": 0.025321037991102312,
+    "lo": 0.024187602897674406,
+    "hi": 0.026498976152782277,
+    "per_seed": [
+     0.02535369276495056,
+     0.025774593880974406,
+     0.024834827327381966
+    ],
+    "diff": 0.00017741326983470793,
+    "diff_lo": -0.0007500863504533762,
+    "diff_hi": 0.0010189016322338631
+   },
+   "contact": {
+    "mean": 0.02613941286089853,
+    "lo": 0.023930824377833358,
+    "hi": 0.02854503129333838,
+    "per_seed": [
+     0.024535616165638485,
+     0.028453482050200967,
+     0.02542914036685614
+    ],
+    "diff": -0.00024179942600878468,
+    "diff_lo": -0.0021357399593680483,
+    "diff_hi": 0.0019033222939641914
+   },
+   "free": {
+    "mean": 0.023682485380042185,
+    "lo": 0.02046973820501417,
+    "hi": 0.026943506758344036,
+    "per_seed": [
+     0.02699164817795556,
+     0.020410915979284596,
+     0.02364489198288639
+    ],
+    "diff": 0.0010167621828028502,
+    "diff_lo": -0.002735959953376362,
+    "diff_hi": 0.004601077006599719
+   }
+  },
+  "torque_arms_only": {
+   "all": {
+    "mean": 0.023593049383908177,
+    "lo": 0.022176858327088336,
+    "hi": 0.025115419519455475,
+    "per_seed": [
+     0.023612168316205447,
+     0.02298358168680305,
+     0.024183398148716038
+    ],
+    "diff": -0.001550575337359427,
+    "diff_lo": -0.002727225922682353,
+    "diff_hi": -0.0005054822362563521
+   },
+   "contact": {
+    "mean": 0.025124373918474458,
+    "lo": 0.023468226144385713,
+    "hi": 0.027034068117657926,
+    "per_seed": [
+     0.025397041104916196,
+     0.02505646918144069,
+     0.02491961146906649
+    ],
+    "diff": -0.0012568383684328568,
+    "diff_lo": -0.002419329958823042,
+    "diff_hi": -7.54165809596608e-05
+   },
+   "free": {
+    "mean": 0.020527026822488612,
+    "lo": 0.018355992762208045,
+    "hi": 0.02285719295742077,
+    "per_seed": [
+     0.02003849068228639,
+     0.018833240147578926,
+     0.022709349637600518
+    ],
+    "diff": -0.0021386963747507225,
+    "diff_lo": -0.004978377258298124,
+    "diff_hi": 0.000615043813358659
+   }
+  },
+  "torque_hands_only": {
+   "all": {
+    "mean": 0.02260240515821134,
+    "lo": 0.02081163798213669,
+    "hi": 0.024207295877010978,
+    "per_seed": [
+     0.023971928696465535,
+     0.022376241388538037,
+     0.021459045389630445
+    ],
+    "diff": -0.0025412195630562656,
+    "diff_lo": -0.004083411816315313,
+    "diff_hi": -0.0010858105177494258
+   },
+   "contact": {
+    "mean": 0.02547410265440339,
+    "lo": 0.023211016233430113,
+    "hi": 0.027417414979389383,
+    "per_seed": [
+     0.027013923789164316,
+     0.025363270539601697,
+     0.024045113634444153
+    ],
+    "diff": -0.0009071096325039239,
+    "diff_lo": -0.0027006839172471543,
+    "diff_hi": 0.0008317206412039063
+   },
+   "free": {
+    "mean": 0.01685268384561533,
+    "lo": 0.015491491574796377,
+    "hi": 0.018444934511890283,
+    "per_seed": [
+     0.01788123702699279,
+     0.016395602691742752,
+     0.01628121181811044
+    ],
+    "diff": -0.005813039351624003,
+    "diff_lo": -0.00814293801981994,
+    "diff_hi": -0.0036211787323050682
+   }
+  }
+ },
+ "act_hand": {
+  "full": {
+   "all": {
+    "mean": 0.033459261238440674,
+    "lo": 0.031529266960529066,
+    "hi": 0.03567347604836517,
+    "per_seed": [
+     0.034972651050367926,
+     0.03377727108118243,
+     0.03162786158377167
+    ]
+   },
+   "contact": {
+    "mean": 0.035327370016752235,
+    "lo": 0.03247759847737931,
+    "hi": 0.03791587077250365,
+    "per_seed": [
+     0.03671286386080234,
+     0.03688157205553714,
+     0.03238767413391724
+    ]
+   },
+   "free": {
+    "mean": 0.029718928257286267,
+    "lo": 0.027068111994587103,
+    "hi": 0.032491622579725835,
+    "per_seed": [
+     0.03148839175847691,
+     0.02756183038917784,
+     0.03010656262420405
+    ]
+   }
+  },
+  "no_force": {
+   "all": {
+    "mean": 0.021559727145277565,
+    "lo": 0.02012617451053377,
+    "hi": 0.023047109075619302,
+    "per_seed": [
+     0.021472485181894076,
+     0.02154974568972237,
+     0.02165695056421624
+    ],
+    "diff": -0.011899534093163109,
+    "diff_lo": -0.0135825801460401,
+    "diff_hi": -0.01001513418308711
+   },
+   "contact": {
+    "mean": 0.022944625448150454,
+    "lo": 0.02125300752015399,
+    "hi": 0.024646763290520752,
+    "per_seed": [
+     0.02275437045014327,
+     0.022903054082681343,
+     0.02317645181162675
+    ],
+    "diff": -0.012382744568601781,
+    "diff_lo": -0.014633179196469837,
+    "diff_hi": -0.009644979079827564
+   },
+   "free": {
+    "mean": 0.018786879622735526,
+    "lo": 0.017334220337443012,
+    "hi": 0.020372766977477783,
+    "per_seed": [
+     0.018905890665261074,
+     0.018840147579256606,
+     0.018614600623688894
+    ],
+    "diff": -0.010932048634550742,
+    "diff_lo": -0.012944475837781824,
+    "diff_hi": -0.008844543334068243
+   }
+  },
+  "no_tactile_input": {
+   "all": {
+    "mean": 0.029424248124966034,
+    "lo": 0.027593607956873174,
+    "hi": 0.03113409835919433,
+    "per_seed": [
+     0.029581593460237365,
+     0.02833120572835717,
+     0.030359945186303555
+    ],
+    "diff": -0.00403501311347464,
+    "diff_lo": -0.00589540880174615,
+    "diff_hi": -0.0020495053545985984
+   },
+   "contact": {
+    "mean": 0.03035685731596435,
+    "lo": 0.028547866500297673,
+    "hi": 0.031988114718619655,
+    "per_seed": [
+     0.03115604107195839,
+     0.029472942867554773,
+     0.03044158800837989
+    ],
+    "diff": -0.004970512700787886,
+    "diff_lo": -0.007320921529762158,
+    "diff_hi": -0.002154901086562018
+   },
+   "free": {
+    "mean": 0.027556975214460502,
+    "lo": 0.024766942120205287,
+    "hi": 0.030658740476097242,
+    "per_seed": [
+     0.026429229744810413,
+     0.02604521621472219,
+     0.03019647968384891
+    ],
+    "diff": -0.002161953042825765,
+    "diff_lo": -0.004960580581359543,
+    "diff_hi": 0.0008291992865840614
+   }
+  },
+  "no_torque_input": {
+   "all": {
+    "mean": 0.027089209496874194,
+    "lo": 0.025462489682489178,
+    "hi": 0.02905052255633233,
+    "per_seed": [
+     0.02710336133120451,
+     0.027802287862669146,
+     0.02636197929674892
+    ],
+    "diff": -0.00637005174156648,
+    "diff_lo": -0.008078317837852943,
+    "diff_hi": -0.004353993981962811
+   },
+   "contact": {
+    "mean": 0.03095584747734707,
+    "lo": 0.02902656896992193,
+    "hi": 0.03320826763689574,
+    "per_seed": [
+     0.03094498458371039,
+     0.03207548427158483,
+     0.029847073576745983
+    ],
+    "diff": -0.004371522539405166,
+    "diff_lo": -0.006871925452093901,
+    "diff_hi": -0.0012229773543359778
+   },
+   "free": {
+    "mean": 0.019347415372006082,
+    "lo": 0.017823433675626738,
+    "hi": 0.021133575523032494,
+    "per_seed": [
+     0.01941165176946025,
+     0.0192464812368559,
+     0.01938411310970209
+    ],
+    "diff": -0.010371512885280185,
+    "diff_lo": -0.012223426044906097,
+    "diff_hi": -0.008366143408837148
+   }
+  },
+  "no_force_output": {
+   "all": {
+    "mean": 0.03231134925918374,
+    "lo": 0.030668402364173616,
+    "hi": 0.03382817307266802,
+    "per_seed": [
+     0.03231875666616489,
+     0.031515087730319254,
+     0.03310020338106707
+    ],
+    "diff": -0.001147911979256934,
+    "diff_lo": -0.002895275559208851,
+    "diff_hi": 0.0007072308428187139
+   },
+   "contact": {
+    "mean": 0.03384237011676001,
+    "lo": 0.03220142064318946,
+    "hi": 0.035460436537550606,
+    "per_seed": [
+     0.03457607387474535,
+     0.034346113091120095,
+     0.0326049233844146
+    ],
+    "diff": -0.0014849998999922273,
+    "diff_lo": -0.003970598963629933,
+    "diff_hi": 0.0014792726580908854
+   },
+   "free": {
+    "mean": 0.029245934720741478,
+    "lo": 0.025111190492307544,
+    "hi": 0.034059391898228916,
+    "per_seed": [
+     0.027799149402281686,
+     0.025846800288803918,
+     0.03409185447113883
+    ],
+    "diff": -0.0004729935365447892,
+    "diff_lo": -0.004529399423859324,
+    "diff_hi": 0.003974010782928411
+   }
+  },
+  "no_decision_supervision": {
+   "all": {
+    "mean": 0.0329481481164495,
+    "lo": 0.03123988260446133,
+    "hi": 0.035114096937540785,
+    "per_seed": [
+     0.03351537859338434,
+     0.032901362282703794,
+     0.03242770347326037
+    ],
+    "diff": -0.0005111131219911746,
+    "diff_lo": -0.0022200534071638535,
+    "diff_hi": 0.0016308689770062896
+   },
+   "contact": {
+    "mean": 0.03548855639802839,
+    "lo": 0.032582902611588284,
+    "hi": 0.038822024322146105,
+    "per_seed": [
+     0.03767160844764561,
+     0.03621534931153063,
+     0.03257871143490893
+    ],
+    "diff": 0.00016118638127615714,
+    "diff_lo": -0.0031951317897926153,
+    "diff_hi": 0.003827780345696403
+   },
+   "free": {
+    "mean": 0.027861735059831114,
+    "lo": 0.024396960649646648,
+    "hi": 0.03223092796897341,
+    "per_seed": [
+     0.025193762753003467,
+     0.02626608754552162,
+     0.03212535488096826
+    ],
+    "diff": -0.001857193197455153,
+    "diff_lo": -0.0055072041811906405,
+    "diff_hi": 0.0024655849425267683
+   }
+  },
+  "full_residual_force": {
+   "all": {
+    "mean": 0.03312925579388005,
+    "lo": 0.03141426628335482,
+    "hi": 0.03496293266792654,
+    "per_seed": [
+     0.03267642778476592,
+     0.03453943570936433,
+     0.03217190388750989
+    ],
+    "diff": -0.0003300054445606257,
+    "diff_lo": -0.002331779814094805,
+    "diff_hi": 0.0018126083976047085
+   },
+   "contact": {
+    "mean": 0.035174556079210426,
+    "lo": 0.03252095401685901,
+    "hi": 0.03825357832045335,
+    "per_seed": [
+     0.03398599616901557,
+     0.03836393461071414,
+     0.03317373745790157
+    ],
+    "diff": -0.00015281393754180972,
+    "diff_lo": -0.0034669667935978803,
+    "diff_hi": 0.0036474654130595175
+   },
+   "free": {
+    "mean": 0.029034149447610364,
+    "lo": 0.026532025781709222,
+    "hi": 0.03172384950959299,
+    "per_seed": [
+     0.030054406050510594,
+     0.026882012574702654,
+     0.030166029717617858
+    ],
+    "diff": -0.0006847788096759032,
+    "diff_lo": -0.003411468537532775,
+    "diff_hi": 0.0020432453712902893
+   }
+  },
+  "torque_arms_only": {
+   "all": {
+    "mean": 0.031078238763628443,
+    "lo": 0.02952787659466654,
+    "hi": 0.03277838678974691,
+    "per_seed": [
+     0.032302710242922666,
+     0.030734142536016078,
+     0.03019786351194657
+    ],
+    "diff": -0.002381022474812231,
+    "diff_lo": -0.004459550169597076,
+    "diff_hi": -0.0004516793878397618
+   },
+   "contact": {
+    "mean": 0.03315289119331303,
+    "lo": 0.030834883840354804,
+    "hi": 0.03523365547474643,
+    "per_seed": [
+     0.0343289384109885,
+     0.03426508758496259,
+     0.030864647583987978
+    ],
+    "diff": -0.0021744788234392062,
+    "diff_lo": -0.005214246845116517,
+    "diff_hi": 0.0009019198567206708
+   },
+   "free": {
+    "mean": 0.026924363466176562,
+    "lo": 0.023361105615786564,
+    "hi": 0.030200304100545736,
+    "per_seed": [
+     0.028245790146861335,
+     0.02366447380229532,
+     0.02886282644937303
+    ],
+    "diff": -0.002794564791109705,
+    "diff_lo": -0.006491428496822414,
+    "diff_hi": 0.00024701518036368715
+   }
+  },
+  "torque_hands_only": {
+   "all": {
+    "mean": 0.03420595403272516,
+    "lo": 0.03149458884404538,
+    "hi": 0.03683599441744861,
+    "per_seed": [
+     0.03675150965103492,
+     0.0341018073384308,
+     0.031764545108709734
+    ],
+    "diff": 0.0007466927942844856,
+    "diff_lo": -0.0021109084914411012,
+    "diff_hi": 0.0036567135831633893
+   },
+   "contact": {
+    "mean": 0.03788461429780112,
+    "lo": 0.034573952853415135,
+    "hi": 0.040487891470254334,
+    "per_seed": [
+     0.0396057743078062,
+     0.03950260606702638,
+     0.03454546251857076
+    ],
+    "diff": 0.0025572442810488857,
+    "diff_lo": -0.0012300265746454826,
+    "diff_hi": 0.006426076650646437
+   },
+   "free": {
+    "mean": 0.02684052945163522,
+    "lo": 0.02295773983723066,
+    "hi": 0.03128992413551191,
+    "per_seed": [
+     0.0310366924216474,
+     0.02328831197688082,
+     0.02619658395637744
+    ],
+    "diff": -0.0028783988056510466,
+    "diff_lo": -0.0071109331867652325,
+    "diff_hi": 0.0015309411593017385
+   }
+  }
+ },
+ "force": {
+  "full": {
+   "all": {
+    "mean": 1.5129395435655226,
+    "lo": 1.28922264084762,
+    "hi": 1.7562814354622711,
+    "per_seed": [
+     1.5608822857225235,
+     1.5342828065258567,
+     1.4436535384481872
+    ]
+   },
+   "contact": {
+    "mean": 2.2341977724749653,
+    "lo": 1.9802712776264968,
+    "hi": 2.4931685971918323,
+    "per_seed": [
+     2.3005138479324843,
+     2.2721854291170605,
+     2.129894040375351
+    ]
+   },
+   "free": {
+    "mean": 0.06883416124549933,
+    "lo": 0.05540148859415573,
+    "hi": 0.08486234432805422,
+    "per_seed": [
+     0.07998976053612894,
+     0.05685196941327172,
+     0.06966075378709731
+    ]
+   }
+  },
+  "no_tactile_input": {
+   "all": {
+    "mean": 1.0871517205029366,
+    "lo": 0.9271184588699356,
+    "hi": 1.2717380011580866,
+    "per_seed": [
+     1.1215351418547566,
+     1.0648129236608568,
+     1.0751070959931965
+    ],
+    "diff": -0.425787823062586,
+    "diff_lo": -0.5369489021380757,
+    "diff_hi": -0.3210665904342743
+   },
+   "contact": {
+    "mean": 1.5830510235272983,
+    "lo": 1.3939516138609396,
+    "hi": 1.773775636966462,
+    "per_seed": [
+     1.6250379047716954,
+     1.5580530119957376,
+     1.566062153814462
+    ],
+    "diff": -0.651146748947667,
+    "diff_lo": -0.8037113267218677,
+    "diff_hi": -0.5039481262825392
+   },
+   "free": {
+    "mean": 0.09426065336179146,
+    "lo": 0.07437979657693683,
+    "hi": 0.1162545725265794,
+    "per_seed": [
+     0.11342040458408328,
+     0.0772461441214351,
+     0.09211541137985597
+    ],
+    "diff": 0.025426492116292124,
+    "diff_lo": 0.005551742591642001,
+    "diff_hi": 0.04648192182607784
+   }
+  },
+  "no_torque_input": {
+   "all": {
+    "mean": 1.484623595530581,
+    "lo": 1.2464585773777448,
+    "hi": 1.7612140771939537,
+    "per_seed": [
+     1.5367035014153168,
+     1.5246441401203927,
+     1.3925231450560336
+    ],
+    "diff": -0.02831594803494153,
+    "diff_lo": -0.12347025470365129,
+    "diff_hi": 0.07098069222431036
+   },
+   "contact": {
+    "mean": 2.203698730471951,
+    "lo": 1.9169860188213923,
+    "hi": 2.5063423197099413,
+    "per_seed": [
+     2.2823670148751116,
+     2.2630865023096955,
+     2.065642674231046
+    ],
+    "diff": -0.030499042003014232,
+    "diff_lo": -0.17460747456585363,
+    "diff_hi": 0.11665282103551598
+   },
+   "free": {
+    "mean": 0.04488921048038574,
+    "lo": 0.03829293258339539,
+    "hi": 0.053330772278885503,
+    "per_seed": [
+     0.0437337854023463,
+     0.04613263477079635,
+     0.044801211268014555
+    ],
+    "diff": -0.023944950765113597,
+    "diff_lo": -0.035919538553789966,
+    "diff_hi": -0.013024445361483474
+   }
+  },
+  "no_decision_supervision": {
+   "all": {
+    "mean": 1.5028428854226012,
+    "lo": 1.2846631217227322,
+    "hi": 1.7517613238279692,
+    "per_seed": [
+     1.481865720865436,
+     1.5662184305229567,
+     1.460444504879411
+    ],
+    "diff": -0.010096658142921378,
+    "diff_lo": -0.08159113494584543,
+    "diff_hi": 0.0761698683831465
+   },
+   "contact": {
+    "mean": 2.219426304547648,
+    "lo": 1.967596176572988,
+    "hi": 2.4786924357847036,
+    "per_seed": [
+     2.1893180561004835,
+     2.315700405829928,
+     2.1532604517125318
+    ],
+    "diff": -0.014771467927317428,
+    "diff_lo": -0.1212885560619655,
+    "diff_hi": 0.11540137052683763
+   },
+   "free": {
+    "mean": 0.06809742122951092,
+    "lo": 0.0545957406918446,
+    "hi": 0.08556591039714771,
+    "per_seed": [
+     0.06540254013675882,
+     0.06560337878324027,
+     0.07328634476853368
+    ],
+    "diff": -0.0007367400159884185,
+    "diff_lo": -0.012609177097533932,
+    "diff_hi": 0.011686968027940437
+   }
+  },
+  "full_residual_force": {
+   "all": {
+    "mean": 1.9189789654286902,
+    "lo": 1.6878869505397582,
+    "hi": 2.183438737471746,
+    "per_seed": [
+     1.9316201735769893,
+     1.8827071141386822,
+     1.9426096085703992
+    ],
+    "diff": 0.40603942186316755,
+    "diff_lo": 0.3353953284571771,
+    "diff_hi": 0.48533023067786685
+   },
+   "contact": {
+    "mean": 2.8492815474763216,
+    "lo": 2.5992942312485114,
+    "hi": 3.104110062303249,
+    "per_seed": [
+     2.8632344918327592,
+     2.799200029356501,
+     2.8854101212397048
+    ],
+    "diff": 0.6150837750013562,
+    "diff_lo": 0.5138091891306811,
+    "diff_hi": 0.7284021601236776
+   },
+   "free": {
+    "mean": 0.056324354260466225,
+    "lo": 0.045187876505018855,
+    "hi": 0.06893579004484195,
+    "per_seed": [
+     0.0663392002510389,
+     0.04770225918486152,
+     0.054931603345498264
+    ],
+    "diff": -0.012509806985033109,
+    "diff_lo": -0.026192578390236088,
+    "diff_hi": 0.0017191436637224854
+   }
+  },
+  "torque_arms_only": {
+   "all": {
+    "mean": 1.535853759226007,
+    "lo": 1.2738283526343932,
+    "hi": 1.800677411959558,
+    "per_seed": [
+     1.5791837886344677,
+     1.6246079511933547,
+     1.4037695378501995
+    ],
+    "diff": 0.02291421566048446,
+    "diff_lo": -0.10997181309109948,
+    "diff_hi": 0.13147886854963858
+   },
+   "contact": {
+    "mean": 2.269867005974154,
+    "lo": 1.9510235374121176,
+    "hi": 2.5523797630206033,
+    "per_seed": [
+     2.33660176956803,
+     2.407255151243784,
+     2.065744097110649
+    ],
+    "diff": 0.035669233499188824,
+    "diff_lo": -0.16609801105580602,
+    "diff_hi": 0.20020883729982816
+   },
+   "free": {
+    "mean": 0.06621024205473709,
+    "lo": 0.05137260108689776,
+    "hi": 0.08853229899801443,
+    "per_seed": [
+     0.06267924270234317,
+     0.05758938731583177,
+     0.07836209614603633
+    ],
+    "diff": -0.0026239191907622417,
+    "diff_lo": -0.017629674059107127,
+    "diff_hi": 0.015551603676562706
+   }
+  },
+  "torque_hands_only": {
+   "all": {
+    "mean": 1.6640368420574883,
+    "lo": 1.3909323798527011,
+    "hi": 1.9396307785971523,
+    "per_seed": [
+     1.7626304520875007,
+     1.7126904802925647,
+     1.5167895937923996
+    ],
+    "diff": 0.15109729849196563,
+    "diff_lo": 0.0126106545842025,
+    "diff_hi": 0.2764714265793103
+   },
+   "contact": {
+    "mean": 2.4723828569662163,
+    "lo": 2.1418515097323576,
+    "hi": 2.7807448041704173,
+    "per_seed": [
+     2.62018235814276,
+     2.546027421133349,
+     2.2509387916225396
+    ],
+    "diff": 0.23818508449125098,
+    "diff_lo": 0.02959476661786937,
+    "diff_hi": 0.4266615589220354
+   },
+   "free": {
+    "mean": 0.04556403423708597,
+    "lo": 0.04071228087668872,
+    "hi": 0.051366652141184285,
+    "per_seed": [
+     0.045637461899125396,
+     0.044180765853832786,
+     0.04687387495829975
+    ],
+    "diff": -0.023270127008413362,
+    "diff_lo": -0.03653591147399385,
+    "diff_hi": -0.011566889401548859
+   }
+  }
+ }
+};
+const $ = s => document.querySelector(s), P = A.full.seeds.seed0.params, k = n => (n / 1e3).toFixed(n > 1e5 ? 0 : 1) + " k";
+const BL = [
+ ["Inputs", [
+  ["cam", "3 cameras", "51 tokens", "", `Head, left wrist and right wrist images at 224 px go through a frozen DINOv2-small encoder. Each camera gives 17 tokens: one summary token and a 4 × 4 grid of pooled patches. A trained projection (${k(P.vis_proj)} parameters) maps them to width 256. The encoder itself is not trained and its outputs are cached on disk.`],
+  ["state", "Joint positions", "6 tokens", "", `The 58 arm and hand joint angles at 6 past frames spaced 2 apart (0.33 s). One token per frame.`],
+  ["tac", "Fingertip force", "6 tokens", "force", `Force and torque at the 10 fingertips (60 numbers) at the same 6 frames. Switched off, all six tokens are replaced by one learned "not available" token, so the network keeps its size. That is different from feeding a measured zero.`],
+  ["tor", "Joint torque", "6 tokens", "force", `Torque at the 58 arm and hand joints at the same 6 frames. It can be limited to arm joints or hand joints; the others are then set to their average. Switched off, the tokens become a learned "not available" token.`],
+  ["task", "Task", "1 token", "", `A learned vector per task. With one task it carries no information; it is there for the three-task model and the swapped-instruction check.`]]],
+ ["Encoder", [["enc", "Transformer encoder", "4 layers · width 256 · 70 tokens in, 70 out", "wide", `All 70 tokens attend to each other once per time step. The result is kept as a cache that every query below reads from. ${k(P.encoder)} parameters, about half the model.`]]],
+ ["Decoder: learned query slots read the cache", [
+  ["chunk", "16 action slots", "one per future frame", "", `Sixteen learned queries, one for each of the next 16 frames. Through 3 decoder layers (${k(P.decoder)} parameters, shared with the decision slots) each gathers what it needs from the cache. Their outputs feed the experts and the force head.`],
+  ["dslots", "3 decision slots", "contact · phase · force level", "", `Three more learned queries in the same decoder. Each ends in its own small head, and all three together drive the expert gate. The idea comes from decision-engine designs: encode the situation once, then ask separate typed questions of it.`]]],
+ ["Heads", [
+  ["exp", "Expert A + Expert B", "action proposals", "", `Two networks of 256 → 256 → 58 (${k(P.experts)} parameters together). Each turns the 16 action slots into a full chunk of joint-target changes.`],
+  ["gate", "Gate", "2 weights per frame", "", `One linear layer on the three decision slots joined together (${P.gate.toLocaleString()} parameters), then a softmax. The action is the weighted sum of the two experts. No separate loss.`],
+  ["fh", "Force head", "30 forces × 16 frames", "force", `Predicts the force vector at each fingertip for frames t+1 to t+16 from the same action slots (${k(P.force_head)} parameters). With the residual option it predicts the change from the force measured now.`],
+  ["dc", "Contact soon?", "yes / no", "force", `Will any fingertip exceed 1 N ten frames (0.33 s) from now? The label comes from the force recording, so it is one of the ways force is used.`],
+  ["dp", "Phase", "pick · wipe · place · none", "", `Which annotated step of the task the frame belongs to. The label comes from the dataset annotation, not from force, so it stays on in every variant.`],
+  ["dl", "Force level", "none · light · firm · high", "force", `Largest fingertip force ten frames from now, in ordered bins split at 1, 5 and 15 N. One score against ordered thresholds, so "firm" is closer to "high" than to "none".`]]]];
+const flow = $("#flow"), info = {};
+BL.forEach(([stage, blocks], i) => {
+  if (i) flow.insertAdjacentHTML("beforeend", `<div class="arrow" aria-hidden="true">▼</div>`);
+  flow.insertAdjacentHTML("beforeend", `<div class="stage">${stage}</div>`);
+  const row = document.createElement("div"); row.className = "row"; flow.appendChild(row);
+  blocks.forEach(([id, name, sub, cls, txt]) => { info[id] = [name, txt];
+    const b = document.createElement("button"); b.type = "button"; b.id = "b_" + id; b.className = "blk " + cls; b.dataset.cls = cls; b.innerHTML = `<b>${name}</b><span>${sub}</span>`; b.onclick = () => pick(id); row.appendChild(b); });
+});
+let sel = "tac", state = {};
+function pick(id) { sel = id; document.querySelectorAll(".blk").forEach(b => b.setAttribute("aria-pressed", b.id === "b_" + id));
+  const extra = {tac: state.tac ? (state.zero ? "Now: fed zeros." : "") : "Now: replaced by the learned \"not available\" token.", tor: state.tor === "off" ? "Now: replaced by the learned \"not available\" token." : state.zero ? "Now: fed zeros." : state.tor !== "all" ? `Now: ${state.tor} only.` : "",
+    fh: !state.out ? "Now: no loss, so this head is untrained and unused." : state.res ? "Now: predicting the change from the current force." : "", dc: state.dec ? "" : "Now: no loss, untrained.", dl: state.dec ? "" : "Now: no loss, untrained.",
+    gate: state.dec ? "" : "Now: two of the three slots it reads get no training signal of their own."}[id] || "";
+  $("#detail").innerHTML = `<h3>${info[id][0]}</h3><p>${info[id][1]} <b>${extra}</b></p>`; }
+const VAR = {"1|all|1|0|1": "full", "0|off|0|0|0": "no_force", "0|all|1|0|1": "no_tactile_input", "1|off|1|0|1": "no_torque_input", "1|all|0|0|1": "no_force_output", "1|all|1|0|0": "no_decision_supervision", "1|all|1|1|1": "full_residual_force", "1|arms|1|0|1": "torque_arms_only", "1|hands|1|0|1": "torque_hands_only"};
+function update() {
+  const s = state = {tac: $("#sw_tac").checked, tor: $("#sw_tor").value, out: $("#sw_out").checked, res: $("#sw_res").checked, dec: $("#sw_dec").checked, zero: $("#sw_zero").checked};
+  $("#sw_res").disabled = !(s.tac && s.out); if ($("#sw_res").disabled) { $("#sw_res").checked = false; s.res = false; }
+  const off = {tac: !s.tac, tor: s.tor === "off", fh: !s.out, dc: !s.dec, dl: !s.dec};
+  for (const id in off) $("#b_" + id).className = "blk " + (off[id] ? "off" : $("#b_" + id).dataset.cls);
+  const v = VAR[[+s.tac, s.tor, +s.out, +s.res, +s.dec].join("|")], src = s.zero ? Z : R, m = x => (x * 1e3).toFixed(1);
+  let h;
+  if (v && src.act[v]) { const a = src.act[v], f = s.out && src.force[v], ref = R.act.no_force;
+    h = `<h3>Held-out error of this variant <span class="mono" style="font-weight:400;color:var(--ink3)">${v}${s.zero ? " · zeroed" : ""}</span></h3><div class="nums">
+      <div class="num"><b>${m(a.contact.mean)} mrad</b><span>action, in contact [${m(a.contact.lo)}, ${m(a.contact.hi)}]</span></div>
+      <div class="num"><b>${m(a.free.mean)} mrad</b><span>action, free motion [${m(a.free.lo)}, ${m(a.free.hi)}]</span></div>
+      ${f ? `<div class="num"><b>${f.all.mean.toFixed(2)} N</b><span>force, all frames (force stays as it is: 0.40 N)</span></div>` : ""}</div>
+      <p style="font-size:13px">Without any force the model scores ${m(ref.contact.mean)} mrad in contact and ${m(ref.free.mean)} in free motion. 34 episodes, 3 seeds, 95% intervals.</p>`; }
+  else h = `<h3>This combination was not trained</h3><p style="font-size:13px">Nine combinations were trained: all on, all off, each of the four ways off alone, torque from arms or hands only, and the residual head.</p>`;
+  $("#result").innerHTML = h; pick(sel);
+}
+["tac", "tor", "out", "res", "dec", "zero"].forEach(i => $("#sw_" + i).addEventListener("change", update)); update();
+
+const avg = (m, f) => { const s = Object.values(A[m].seeds).map(f); return s.reduce((a, b) => a + b, 0) / s.length; };
+function bars(host, rows, max, fmt) { host.innerHTML = rows.map(([lab, sub, c, f]) => `<div class="lab">${lab}${sub ? ` <small>${sub}</small>` : ""}</div><div class="pair">${[[c, "--s1"], [f, "--s2"]].map(([v, col]) => `<div class="bar"><i style="width:${(v / max * 82).toFixed(1)}%;background:var(${col})"></i><span>${fmt(v)}</span></div>`).join("")}</div>`).join(""); }
+function ko() { const m = $("#ko_model").value, G = [["cameras", "Cameras"], ["joint state", "Joint positions"], ["fingertip force", "Fingertip force"], ["joint torque", "Joint torque"]];
+  bars($("#ko"), G.map(([g, n]) => [n, "", avg(m, s => s.knockout_mrad[g].contact), avg(m, s => s.knockout_mrad[g].free)]), 85, v => v.toFixed(1) + " mrad"); }
+$("#ko_model").onchange = ko; ko();
+const AT = A.full.seeds.seed0.attention, GN = {"camera head_left": "Head camera", "camera wrist_left": "Left wrist camera", "camera wrist_right": "Right wrist camera", "joint state": "Joint positions", "fingertip force": "Fingertip force", "joint torque": "Joint torque", task: "Task"};
+Object.keys(AT.slots).forEach(s => $("#at_slot").add(new Option(s, s)));
+function at() { const s = AT.slots[$("#at_slot").value]; bars($("#at"), AT.groups.map((g, i) => [GN[g], AT.tokens[i] + " tok", s.contact[i], s.free[i]]), 0.45, v => (v * 100).toFixed(0) + "%"); }
+$("#at_slot").onchange = at; at();
+const conds = ["contact", "free", "phase: pick", "phase: wipe", "phase: place", "phase: none"], CN = ["In contact", "Free motion", "Pick", "Wipe", "Place", "Between steps"];
+$("#gate").innerHTML = `<tr><th>Weight on expert A</th>${Object.keys(A.full.seeds).map(s => `<th>${s.replace("seed", "Seed ")}</th>`).join("")}</tr>` + conds.map((c, i) => `<tr><td>${CN[i]}</td>${Object.values(A.full.seeds).map(s => { const g = s.gate[c][0]; return `<td><div class="g"><u><i style="width:${g * 100}%"></i></u>${g.toFixed(2)}</div></td>`; }).join("")}</tr>`).join("");
+const sep = c => avg("full", s => s.expert_separation_mrad[c]).toFixed(0);
+$("#gate_note").textContent = `Model with force, mean gate weight over held-out frames. "Expert A" is simply the first of the two; the networks start from different random weights, so which one takes which role is free to differ between seeds. The two experts' proposals differ by ${sep("contact")} mrad on average in contact and ${sep("free")} mrad in free motion.`;
+const K = (m, g, c) => avg(m, s => s.knockout_mrad[g][c]).toFixed(1), a0 = AT.slots[Object.keys(AT.slots)[0]], fi = AT.groups.indexOf("fingertip force");
+$("#findings").innerHTML = [
+ `Joint positions dominate: swapping them changes the action by ${K("full", "joint state", "contact")} mrad in contact and ${K("full", "joint state", "free")} in free motion. Joint torque comes second (${K("full", "joint torque", "contact")} and ${K("full", "joint torque", "free")}).`,
+ `Fingertip force is the only input that matters more in contact than in free motion (${K("full", "fingertip force", "contact")} vs ${K("full", "fingertip force", "free")} mrad). The action slots put ${(a0.contact[fi] * 100).toFixed(0)}% of their attention on it in contact and ${(a0.free[fi] * 100).toFixed(0)}% in free motion.`,
+ `Force replaces part of the cameras. The model without force changes by ${K("no_force", "cameras", "contact")} mrad in contact when the cameras are swapped; the model with force changes by ${K("full", "cameras", "contact")}.`,
+ `The gate does switch with the task step within a run, but not the same way in every run. In seeds 0 and 2 one expert takes about 0.9 of the weight during wiping; in seed 1 the split is only 0.35 / 0.65. During picking the three seeds put 0.30, 0.49 and 0.68 on expert A. So the experts are not a stable "contact expert" and "free-motion expert".`,
+ `A single-expert model was not trained, so there is no measurement yet of whether the mixture lowers error at all.`].map(t => `<li>${t}</li>`).join("");
+const fr = R.force;
+$("#res_txt").textContent = `Result on held-out frames: plain head ${fr.full.all.mean.toFixed(2)} N, worse than assuming the force stays as it is (0.40 N). Residual head ${fr.full_residual_force.all.mean.toFixed(2)} N [${fr.full_residual_force.all.lo.toFixed(2)}, ${fr.full_residual_force.all.hi.toFixed(2)}], slightly better than that baseline but with an interval that includes it. Action error is unchanged.`;
+</script>

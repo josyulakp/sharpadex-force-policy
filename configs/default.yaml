@@ -1,0 +1,249 @@
+# Single source of truth for every data / model / training parameter.
+# Any value can be overridden from the command line without code edits, e.g.
+#   python scripts/train.py data.tasks=[clean_plate_with_eraser] force.tactile_input=false train.seed=1
+
+data:
+  root: /opt/dlami/nvme/sharpadex          # local copy of Sharpa-Robotics/SharpaDex-v1.0
+  format: lerobot_v2.1
+  fps: 30
+  tasks:                                    # brief: 3 tasks, clean_plate_with_eraser mandatory
+    - clean_plate_with_eraser
+    - insert_plug_into_socket
+    - remove_block_from_box
+  holdout_fraction: 0.10                    # per task, stratified by season, never trained on
+  split_seed: 0                             # fixes the held-out episodes
+  train_episode_share: 1.0                  # share of training episodes used (0.10 / 0.25 / 0.50 / 1.0)
+  subset_seed: 0                            # fixes which training episodes form each share (nested subsets)
+  contact_threshold_n: 1.0                  # frame is "in contact" if any fingertip |F| exceeds this
+  use_torso: false                          # torso dims 58-64: tiny motion, motor_j5 state dead in eraser task
+
+force:                                      # each way force is used can be switched independently
+  tactile_input: true                       # fingertip force/torque history (60-D) as model input
+  torque_input: true                        # arm+hand joint torque history (58-D) as model input
+  torque_joints: all                        # all / arms / hands: which joint torques the model reads
+  force_output: true                        # predict the future fingertip force next to the action
+  decision_supervision: true                # contact-soon + force-level decision slots (labels come from force)
+
+vision:
+  cameras: [head_left, wrist_left, wrist_right]
+  encoder: vit_small_patch14_dinov2.lvd142m # frozen; features are cached once
+  image_size: 224
+  pool_grid: 4                              # patch tokens average-pooled to grid x grid, plus CLS
+  batch_size: 512
+  num_workers: 16
+  cache_dir: /opt/dlami/nvme/sharpadex_cache
+
+model:
+  d_model: 256
+  n_heads: 4
+  enc_layers: 4
+  dec_layers: 3
+  ff_mult: 4
+  dropout: 0.1
+  obs_history: 6                            # frames of state / tactile / torque history (same for every variant)
+  obs_stride: 2                             # spacing of history frames -> 6 x 2 = 0.33 s
+  chunk: 16                                 # predicted action steps (0.53 s at 30 Hz)
+  head: regression                          # regression: one forward pass, L1 loss / flow: flow matching over the joint action-force chunk
+  flow:                                     # head=flow (conventions of pi0 / Facet-0)
+    sample_steps: 10                        # Euler steps from noise to the chunk
+    time_beta: [1.5, 1.0]                   # noise level tau ~ Beta(a, b) * 0.999 + 0.001 (tau = 1 is pure noise)
+    force_weight: 0.1                       # weight of the force part of the joint flow loss (Facet-0: 0.1)
+    sample_seed: 0                          # evaluation draws the same noise for every run
+    force_scale: auto                       # N the force channels are divided by. auto = size of the force target in the training data
+                                            # (about 1.2 N); a number sets it; null = train.force_scale_n (10 N, far too large for a flow)
+  n_experts: 2                              # mixture-of-experts action head; 1 = plain head
+  expert_layout: mixture                    # mixture: softmax-weighted experts / shared_residual: expert 0 always on, others add a gated correction
+  gate_source: learned                      # learned / contact (shared_residual only): gate = predicted contact-soon probability
+  force_residual: false                     # force head predicts the change from the force measured now
+  force_world_model:                        # tiny world model: force change predicted from latent + action chunk
+    enabled: false                          # replaces the force head; implies force_residual
+    hidden: 192                             # GRU width
+    predicted_action_prob: 0.0              # training: share of samples conditioned on the model's own actions instead of the recorded ones
+  wrench_expert:                            # FACET-style expert: wrench-history token E_w + kinematic token E_s -> joint action-wrench proposal
+    enabled: false                          # adds one expert to the mixture; needs force.tactile_input
+    window: 10                              # consecutive frames of fingertip wrench history (FACET: 10 x 6 per sensor)
+    wrench_tokens: true                     # false = control: same expert and loss, but it sees only the kinematic token
+    filter_window: 5                        # causal moving average applied to the wrench targets
+    weight: 1.0                             # weight of the expert's own joint action-wrench loss
+    wrench_weight: 0.1                      # wrench term inside that loss (FACET: 0.1)
+  tactile_expert:                           # expert that reads the frozen TacForeSight world model (scripts/tf_features.py first)
+    enabled: false                          # adds one expert to the mixture (regression head); needs force.tactile_input
+    tokens: 16                              # 8 latents of the last 8 fingertip-image frames + 8 latents predicted for the next 8
+    latent_dim: 128
+    predicted_tokens: true                  # false = control: the same expert sees only the 8 measured latents
+    weight: 1.0                             # weight of the expert's own action loss
+  energy:                                   # energy-based reasoning (EBR, Chen et al. 2026) on the slot latents, regression head
+    enabled: false                          # slot latents are refined by gradient descent on a learned energy before the heads read them
+    update: gradient                        # gradient: z <- z - step * dE/dz / direct = control: the same network outputs the update itself
+    init: decoder                           # decoder: start from the decoder's slots / noise: start from noise (as in EBR)
+    layers: 2                               # energy network: transformer layers over the slots, cross-attending the state cache
+    steps: 6                                # descent steps
+    graded_steps: 3                         # the last steps that are trained through (second-order); earlier ones run without a graph
+    step_size: 5.0                          # training draws 0.8-1.0 x this per sample (EBR: 200-250 at its energy scale)
+    noise: 0.05                             # noise added to the latent at every step
+    interior_weight: 0.5                    # loss weight of the states before the last step
+    explore_k: 1                            # > 1: forward SXM, train only the closest of K noise draws
+    eval_samples: 1                         # > 1: keep the sample with the lowest final energy
+    eval_seed: 0                            # evaluation draws the same noise for every run
+  advantage:                                # Facet-0 stage 2: second flow branch conditioned on a "positive credit" tag
+    enabled: false                          # needs scripts/rl_reward.py + rl_critic.py first (labels in <rl.out_dir>/credit.npz)
+    contact_weight: 1.0                     # sample weight 1 + contact_weight * contact intensity
+  decision:
+    horizon: 10                             # decisions are about frame t + horizon (0.33 s ahead)
+    force_levels_n: [1.0, 5.0, 15.0]        # ordinal force level: none / light / firm / high
+
+train:
+  seed: 0
+  steps: 8000
+  batch_size: 256
+  lr: 3.0e-4
+  weight_decay: 0.01
+  warmup_steps: 500
+  grad_clip: 1.0
+  amp: true
+  action_loss: l1                           # l1: mean absolute error / ht: heavy-tailed residual loss of HT-Policy (regression head)
+  ht:                                       # action_loss=ht: Student-t residual with one learned scale per chunk
+    nu_per_dim: 4.0                         # degrees of freedom = this x valid elements of the chunk (ht_loss default: 4; the paper's RoboMimic configs: 2)
+    min_scale: 1.0e-3                       # floor of the scale (normalised action units)
+    calibration_frames: 2048                # training frames used to set the starting scale to the untrained model's residual size
+  w_action: 1.0
+  w_force: 0.5
+  w_decision: 0.2
+  force_scale_n: 10.0                       # force targets are divided by this before the loss
+  log_every: 200
+  out_root: runs
+  name: default
+  eval_at: []                               # also checkpoint + evaluate at these steps (eval_heldout__step<N>)
+  init_exclude: "experts.1"                 # weights whose name starts with this are not copied ("" = copy everything)
+  init_from: null                           # run directory to copy matching weights from ({seed} is filled in); null = from scratch
+
+eval:
+  batch_size: 1024
+  zero_force: false                         # step 5: true = feed zeros for tactile + torque at test time; tactile / torque = only that one
+  swap_task: null                           # step 5: evaluate with another task's instruction/id
+  guidance: 1.0                             # model.advantage: velocity = plain + guidance * (tagged - plain); 0 = plain branch
+  flow_noise_scale: 1.0                     # head=flow: scale of the starting noise at test time (0 = one deterministic chunk)
+  bootstrap_samples: 2000
+  ci: 0.95
+
+report:
+  out_dir: reports/data
+  split_dir: splits
+  thresholds_sweep_n: [0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 10.0]
+  num_workers: 32
+
+rollout:                                    # offline replay of single episodes (scripts/rollout.py)
+  group: eraser_force
+  action_variants: [full, no_force]         # action traces shown side by side
+  force_variants: [full, full_residual_force]
+  seed: 0
+  execute_steps: 8                          # a predicted chunk is followed for this many frames, then re-predicted
+  n_heldout: 3                              # lowest / median / highest error held-out episode of the first variant
+  n_train: 1                                # one training episode as a reference for "seen" data
+  cameras: [head_left, wrist_left, wrist_right]
+  video_height: 240
+  video_stride: 2                           # 30 Hz -> 15 fps
+  out_dir: reports/rollouts
+
+mpc:                                        # second embodiment: an expert that imitates the C3 contact MPC
+  enabled: false                            # co-train the MPC expert next to the robot policy
+  data: /opt/dlami/nvme/external/dairlib_admm_adaptive/examples/c3_python/data/c3_finger_ball.npz
+  sim_path: /opt/dlami/nvme/external/dairlib_admm_adaptive/examples/c3_python   # fork of dairlib, branch admm_adaptive
+  holdout_fraction: 0.10                    # of teacher episodes
+  split_seed: 0
+  batch_size: 256
+  weight: 1.0                               # weight of the MPC imitation loss next to the robot loss
+  contact_threshold_n: 0.1                  # planned normal force above this counts as contact
+  rollout_episodes: 30                      # closed-loop comparison student vs teacher
+  rollout_steps: 400
+  rollout_seed: 1000
+
+video_world_model:                          # Cosmos-Predict2 2B action-conditioned, fine-tuned on joint commands (scripts/wm_*.py)
+  src: /opt/dlami/nvme/external/cosmos_predict2_src        # clone of nvidia-cosmos/cosmos-predict2 with its own environment
+  data_dir: /opt/dlami/nvme/sharpadex_wm    # decoded frames + joint streams per episode
+  tasks: [clean_plate_with_eraser]
+  camera: head_left
+  frame_stride: 3                           # 30 Hz -> 10 Hz video
+  chunk_frames: 13                          # 1 conditioning frame + 12 predicted (1.2 s)
+  image_size: 480                           # stored size (native); training size is set below
+  train_size: 320
+  action: target_minus_state                # per predicted frame: commanded joint target - joint state at the conditioning frame, / action_scale
+  action_scale_rad: 0.25
+  batch_size: 4
+  lr: 3.0e-5
+  steps: 6000
+  save_every: 1000
+  num_workers: 16
+  out_dir: /opt/dlami/nvme/sharpadex_wm/runs/eraser_head
+  sample_steps: 20                          # denoising steps at rollout time
+
+primesim_world_model:                       # PrimeSim (Wan2.2-TI2V-5B, three views, action-conditioned), fine-tuned on SharpaDex (scripts/ps_*.py)
+  src: /opt/dlami/nvme/external/primesim_src                # clone of PrimebotTech/PrimeSim with its own environment and checkpoints/
+  data_dir: /opt/dlami/nvme/sharpadex_ps/data               # LeRobot v3 copies written by ps_prepare.py
+  task: clean_plate_with_eraser
+  image_size: 256                           # stored and trained at this size (square, like the cameras)
+  action_dim: 75                            # PrimeSim's 31 shared dims + 44 finger joints
+  train:                                    # overrides passed to PrimeSim's launch=finetune
+    max_train_steps: 6000
+    lr_warmup_steps: 300
+    learning_rate: 1.0e-4
+    batch_size: 4
+    save_steps: 1000
+    save_frame_steps: 1000
+
+rl:                                         # Facet-0 stage 2 (offline refinement); scripts/rl_*.py
+  out_dir: /opt/dlami/nvme/sharpadex_rl
+  judge_api:                                # scripts/rl_judge_api.py: the same judge through the OpenAI API (key: OPENAI_API_KEY)
+    model: gpt-6-luna                       # exact model id from the provider's model list
+    effort: medium                          # reasoning effort
+    workers: 8                              # parallel requests
+    retries: 5
+  judge_dir: /opt/dlami/nvme/sharpadex_rl/judge             # outputs of rl_judge.py / rl_judge_api.py, one folder per judge
+  reward:                                   # scripts/rl_reward.py
+    judge: annotation                       # annotation = the dataset's subtask labels; or a folder name under judge_dir
+    gamma: 0.99
+    beta: 1.0                               # speed bonus: completion reward x (1 + beta * max(1 - frames used / time budget, 0))
+    time_budget_quantile: 0.9               # time budget per task and subgoal = this quantile of its duration in training
+    alpha: 0.1                              # penalty per frame: alpha * max(max |wrench| / envelope - 1, 0)
+    envelope_quantile: 0.99                 # envelope per task, subgoal and wrench axis = this quantile over training frames
+  critic:                                   # scripts/rl_critic.py: distributional value of the frozen policy's features
+    encoder_run: runs/flow/full_wrench_expert/seed0
+    atoms: 201
+    v_min: -10.0
+    v_max: 10.0
+    hidden: 512
+    steps: 80000
+    batch_size: 4096
+    lr: 3.0e-4
+    target_ema: 0.005
+    seed: 0
+  credit:
+    horizon: 20                             # frames of reward before bootstrapping with the value
+    positive_fraction: 0.2                  # top share of credit labelled positive, within contact and free separately
+    filter_window: 5                        # contact regime: change of the filtered wrench over `lag` frames
+    lag: 8
+    episode_quantile: 0.8
+    corpus_quantile: 0.5
+  judge:                                    # a vision-language model labels subgoal progress from the camera
+    model: Qwen/Qwen2.5-VL-7B-Instruct
+    camera: head_left
+    stride: 30                              # judged once per second (30 Hz data)
+    lookback: [60, 30]                      # earlier frames shown with the current one (frames back)
+    image_size: 336
+    batch_size: 8
+    question: count                         # count: how many steps are finished / current: which step is in progress
+    quant: none                             # 4bit = load the judge quantised (bitsandbytes)
+
+tactile_world_model:                        # TacForeSight's tactile world model (latent prediction), trained on SharpaDex (scripts/tf_*.py)
+  src: /opt/dlami/nvme/external/tacforesight_src            # clone of TacForeSight/TacForeSight (used unmodified)
+  packages: /opt/dlami/nvme/external/tf_pkgs                # zarr + tensorboard, kept out of the project environment
+  data_dir: /opt/dlami/nvme/sharpadex_tf                    # <data_dir>/{train,val}/replay_buffer.zarr
+  task: clean_plate_with_eraser
+  map_rows: 7                               # each fingertip's 240x240 deformation image -> map_rows x 20; five fingertips stacked = 35 x 20 per hand
+  horizon: 8                                # frames predicted at once (0.27 s) from the 8 frames before them
+  epochs: 30                                # this run: stopped by hand at epoch 20 if the held-out loss has not improved after epoch 15
+  batch_size: 64                            # 256 (TacForeSight's default) needs 32 GB at this map size
+  run_name: sharpa_eraser
+
+release:
+  hf_repo: josyula/sharpadex-force-policy   # Hugging Face model repository with the released checkpoints, at the same relative paths as in this repository

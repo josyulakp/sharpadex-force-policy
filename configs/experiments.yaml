@@ -1,0 +1,181 @@
+# Experiment groups: each variant is a list of config overrides applied on top of configs/default.yaml.
+#   python scripts/run_experiments.py eraser_force          # trains + evaluates every variant x seed
+#   python scripts/aggregate.py eraser_force                # table with intervals over episodes and seeds
+
+eraser_force:                      # step 3 on one task: the model with and without force, and each way alone
+  common: ["data.tasks=[clean_plate_with_eraser]"]
+  seeds: [0, 1, 2]
+  reference: full
+  variants:
+    full: []
+    no_force:
+      - force.tactile_input=false
+      - force.torque_input=false
+      - force.force_output=false
+      - force.decision_supervision=false
+    no_tactile_input: [force.tactile_input=false]
+    no_torque_input: [force.torque_input=false]
+    no_force_output: [force.force_output=false]
+    no_decision_supervision: [force.decision_supervision=false]
+    full_residual_force: [model.force_residual=true]
+    torque_arms_only: [force.torque_joints=arms]       # where does the torque gain come from?
+    torque_hands_only: [force.torque_joints=hands]
+    full_plus_mpc_expert: [mpc.enabled=true]           # same model, co-trained with an expert that imitates the C3 MPC
+    single_expert: [model.n_experts=1]                 # dense baseline for the mixture
+    shared_contact_gated:                              # one always-on expert + a correction gated by predicted contact
+      - model.expert_layout=shared_residual
+      - model.gate_source=contact
+    shared_contact_gated_upcycled:                     # same, started from the trained single-expert run (8000 extra steps)
+      - model.expert_layout=shared_residual
+      - model.gate_source=contact
+      - train.init_from=runs/eraser_force/single_expert/seed{seed}
+    full_world_model_force: [model.force_world_model.enabled=true]     # force change predicted from latent + action chunk
+    full_world_model_force_mixed:                                      # same, half the training samples see the model's own actions
+      - model.force_world_model.enabled=true
+      - model.force_world_model.predicted_action_prob=0.5
+
+headline:                          # step 3, the released model: four experts, three tasks, 50k steps, against the same model without force
+  common: ["model.force_residual=true", "train.steps=50000", "train.eval_at=[25000]"]
+  seeds: [0, 1, 2]
+  reference: full
+  variants:
+    full: [model.wrench_expert.enabled=true, model.tactile_expert.enabled=true]   # 2 plain experts + wrench expert + tactile world-model expert
+    no_force:                                          # no force in or out; the two force experts become plain experts (4 plain experts)
+      - force.tactile_input=false
+      - force.torque_input=false
+      - force.force_output=false
+      - force.decision_supervision=false
+      - model.n_experts=4
+    two_experts: []                                    # the two-expert model with force at the same budget (three_tasks/full at 50k steps)
+    no_force_two_experts:                              # the same without the two extra experts (three_tasks/no_force at 50k steps)
+      - force.tactile_input=false
+      - force.torque_input=false
+      - force.force_output=false
+      - force.decision_supervision=false
+
+three_tasks:                       # the two-expert model at 8k steps on all three tasks: each way of using force alone (residual force head)
+  common: ["model.force_residual=true"]
+  seeds: [0, 1, 2]
+  reference: full
+  variants:
+    full: []
+    no_force:
+      - force.tactile_input=false
+      - force.torque_input=false
+      - force.force_output=false
+      - force.decision_supervision=false
+    no_tactile_input: [force.tactile_input=false]
+    no_torque_input: [force.torque_input=false]
+    no_force_output: [force.force_output=false]
+    no_decision_supervision: [force.decision_supervision=false]
+    full_3x_steps: [train.steps=24000]                 # is the three-task model limited by the training budget?
+    full_wrench_expert: [model.wrench_expert.enabled=true]   # + FACET wrench encoder as a third expert, joint action-wrench loss
+    full_wrench_expert_no_wrench_tokens:                     # control: the same third expert and loss without the wrench tokens
+      - model.wrench_expert.enabled=true
+      - model.wrench_expert.wrench_tokens=false
+
+tactile_expert:                    # a fourth expert that reads the TacForeSight tactile world model (compare with three_tasks/full_wrench_expert)
+  common: ["model.force_residual=true", "model.wrench_expert.enabled=true", "model.tactile_expert.enabled=true"]
+  seeds: [0, 1, 2]
+  reference: four_experts
+  variants:
+    four_experts: []                                   # 2 plain experts + wrench expert + tactile world-model expert
+    four_experts_no_prediction: [model.tactile_expert.predicted_tokens=false]   # control: measured latents only, no predicted ones
+
+ht_loss:                           # four experts with L1 or with the heavy-tailed residual loss of HT-Policy (L1 at 50k steps = headline/full)
+  common: ["model.force_residual=true", "model.wrench_expert.enabled=true", "model.tactile_expert.enabled=true",
+           "train.steps=25000", "train.eval_at=[8000]"]
+  seeds: [0, 1, 2]
+  reference: l1_25k
+  variants:
+    l1_25k: []                                         # same model and budget, L1 action loss
+    ht_25k: [train.action_loss=ht]                     # Student-t residual with a learned scale per chunk
+    ht_50k: [train.action_loss=ht, "train.steps=50000", "train.eval_at=[25000]"]   # twice the budget (own cosine schedule, not a continuation)
+
+energy:                            # energy-based reasoning (EBR) on the slot latents (compare with three_tasks/full)
+  common: ["model.force_residual=true", "model.energy.enabled=true"]
+  seeds: [0, 1, 2]
+  reference: descent
+  variants:
+    descent: []                                        # decoder's slots refined by 6 gradient steps on the learned energy
+    direct_update: [model.energy.update=direct]        # control: the same network outputs the update itself, no energy
+    from_noise_sxm:                                    # as in EBR: start from noise, train the closest of 2 noise draws
+      - model.energy.init=noise
+      - model.energy.explore_k=2
+
+flow:                              # the whole policy as a flow-matching model, 25k steps, evaluated at 8k / 16k / 24k / 25k
+                                   # (trained before the force-scale fix: force channels divided by 10 N)
+  common: ["model.head=flow", "model.force_residual=true", "train.steps=25000", "train.eval_at=[8000,16000,24000]", "model.flow.force_scale=null"]
+  seeds: [0, 1, 2]
+  reference: full
+  variants:
+    full: []
+    no_force:
+      - force.tactile_input=false
+      - force.torque_input=false
+      - force.force_output=false
+      - force.decision_supervision=false
+    full_wrench_expert: [model.wrench_expert.enabled=true]
+    regression_25k: [model.head=regression]            # same budget and schedule with the direct-regression head
+
+refine:                            # Facet-0 stage 2 on the flow policy: 8000 more steps from flow/full_wrench_expert
+  common: ["model.head=flow", "model.force_residual=true", "model.wrench_expert.enabled=true", "train.steps=8000",
+           "train.lr=1.0e-4", "train.init_from=runs/flow/full_wrench_expert/seed{seed}", "train.init_exclude=", "model.flow.force_scale=null"]
+  seeds: [0, 1, 2]
+  reference: continued
+  variants:
+    continued: []                                      # control: the same extra training with the plain flow loss
+    refined: [model.advantage.enabled=true]            # + tagged branch on positive-credit frames, contact-weighted loss
+
+refine_luna:                       # the same stage 2 with subgoal progress judged by gpt-6-luna from the head camera
+  common: ["model.head=flow", "model.force_residual=true", "model.wrench_expert.enabled=true", "train.steps=8000",
+           "train.lr=1.0e-4", "train.init_from=runs/flow/full_wrench_expert/seed{seed}", "train.init_exclude=", "model.flow.force_scale=null",
+           "rl.out_dir=/opt/dlami/nvme/sharpadex_rl_luna", "rl.reward.judge=gpt-6-luna__api"]
+  seeds: [0, 1, 2]
+  reference: refined
+  variants:
+    refined: [model.advantage.enabled=true]            # control = refine/continued (identical training, no labels involved)
+
+scaling:                           # step 4: share of training episodes (nested subsets); 100 % = three_tasks/full and no_force
+  common: ["model.force_residual=true"]
+  seeds: [0, 1, 2]
+  reference: full_50
+  variants:
+    full_10: [data.train_episode_share=0.10]
+    full_25: [data.train_episode_share=0.25]
+    full_50: [data.train_episode_share=0.50]
+    no_force_10: [data.train_episode_share=0.10, force.tactile_input=false, force.torque_input=false, force.force_output=false, force.decision_supervision=false]
+    no_force_25: [data.train_episode_share=0.25, force.tactile_input=false, force.torque_input=false, force.force_output=false, force.decision_supervision=false]
+    no_force_50: [data.train_episode_share=0.50, force.tactile_input=false, force.torque_input=false, force.force_output=false, force.decision_supervision=false]
+
+scaling_four_experts:              # step 4 for the released model's design at 8k steps; 100 % with force = tactile_expert/four_experts
+  common: ["model.force_residual=true"]
+  seeds: [0, 1, 2]
+  reference: full_50
+  variants:
+    full_10: [data.train_episode_share=0.10, model.wrench_expert.enabled=true, model.tactile_expert.enabled=true]
+    full_25: [data.train_episode_share=0.25, model.wrench_expert.enabled=true, model.tactile_expert.enabled=true]
+    full_50: [data.train_episode_share=0.50, model.wrench_expert.enabled=true, model.tactile_expert.enabled=true]
+    no_force_10: [data.train_episode_share=0.10, force.tactile_input=false, force.torque_input=false, force.force_output=false, force.decision_supervision=false, model.n_experts=4]      # four plain experts
+    no_force_25: [data.train_episode_share=0.25, force.tactile_input=false, force.torque_input=false, force.force_output=false, force.decision_supervision=false, model.n_experts=4]
+    no_force_50: [data.train_episode_share=0.50, force.tactile_input=false, force.torque_input=false, force.force_output=false, force.decision_supervision=false, model.n_experts=4]
+    no_force_100: [force.tactile_input=false, force.torque_input=false, force.force_output=false, force.decision_supervision=false, model.n_experts=4]
+
+flow_diagnose:                     # direct tests of why the flow policy trails regression (one seed; compare with flow/full seed 0)
+  common: ["model.head=flow", "model.force_residual=true", "train.steps=25000", "model.flow.force_scale=null"]
+  seeds: [0]
+  reference: wide
+  variants:
+    wide: [model.d_model=512]                          # is the network too narrow?
+    force_scale: [train.force_scale_n=0.5]             # force channels of the flow at about unit size instead of ~0.03
+    steps_50k: [train.steps=50000]                     # is it under-trained?
+
+flow_scaled:                       # the flow policy with the force channels at unit size (model.flow.force_scale=auto, now the default)
+  common: ["model.head=flow", "model.force_residual=true", "train.steps=25000"]
+  seeds: [0, 1, 2]
+  reference: full
+  variants:
+    full: []
+    full_wrench_expert: [model.wrench_expert.enabled=true]
+    full_wide: [model.d_model=512]                     # + twice the width (the largest gain in flow_diagnose)
+    regression_wide: [model.head=regression, model.d_model=512]   # the regression head at the same width, for a fair comparison

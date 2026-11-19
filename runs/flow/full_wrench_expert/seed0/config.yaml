@@ -1,0 +1,170 @@
+data:
+  root: /opt/dlami/nvme/sharpadex
+  format: lerobot_v2.1
+  fps: 30
+  tasks:
+  - clean_plate_with_eraser
+  - insert_plug_into_socket
+  - remove_block_from_box
+  holdout_fraction: 0.1
+  split_seed: 0
+  train_episode_share: 1.0
+  subset_seed: 0
+  contact_threshold_n: 1.0
+  use_torso: false
+force:
+  tactile_input: true
+  torque_input: true
+  torque_joints: all
+  force_output: true
+  decision_supervision: true
+vision:
+  cameras:
+  - head_left
+  - wrist_left
+  - wrist_right
+  encoder: vit_small_patch14_dinov2.lvd142m
+  image_size: 224
+  pool_grid: 4
+  batch_size: 512
+  num_workers: 16
+  cache_dir: /opt/dlami/nvme/sharpadex_cache
+model:
+  d_model: 256
+  n_heads: 4
+  enc_layers: 4
+  dec_layers: 3
+  ff_mult: 4
+  dropout: 0.1
+  obs_history: 6
+  obs_stride: 2
+  chunk: 16
+  head: flow
+  flow:
+    sample_steps: 10
+    time_beta:
+    - 1.5
+    - 1.0
+    force_weight: 0.1
+    sample_seed: 0
+  n_experts: 2
+  expert_layout: mixture
+  gate_source: learned
+  force_residual: true
+  force_world_model:
+    enabled: false
+    hidden: 192
+    predicted_action_prob: 0.0
+  wrench_expert:
+    enabled: true
+    window: 10
+    wrench_tokens: true
+    filter_window: 5
+    weight: 1.0
+    wrench_weight: 0.1
+  decision:
+    horizon: 10
+    force_levels_n:
+    - 1.0
+    - 5.0
+    - 15.0
+train:
+  seed: 0
+  steps: 25000
+  batch_size: 256
+  lr: 0.0003
+  weight_decay: 0.01
+  warmup_steps: 500
+  grad_clip: 1.0
+  amp: true
+  w_action: 1.0
+  w_force: 0.5
+  w_decision: 0.2
+  force_scale_n: 10.0
+  log_every: 200
+  out_root: runs
+  name: flow/full_wrench_expert
+  eval_at:
+  - 8000
+  - 16000
+  - 24000
+  init_from: null
+eval:
+  batch_size: 1024
+  zero_force: false
+  swap_task: null
+  bootstrap_samples: 2000
+  ci: 0.95
+report:
+  out_dir: reports/data
+  split_dir: splits
+  thresholds_sweep_n:
+  - 0.25
+  - 0.5
+  - 1.0
+  - 2.0
+  - 3.0
+  - 5.0
+  - 10.0
+  num_workers: 32
+rollout:
+  group: eraser_force
+  action_variants:
+  - full
+  - no_force
+  force_variants:
+  - full
+  - full_residual_force
+  seed: 0
+  execute_steps: 8
+  n_heldout: 3
+  n_train: 1
+  cameras:
+  - head_left
+  - wrist_left
+  - wrist_right
+  video_height: 240
+  video_stride: 2
+  out_dir: reports/rollouts
+mpc:
+  enabled: false
+  data: /opt/dlami/nvme/external/dairlib_admm_adaptive/examples/c3_python/data/c3_finger_ball.npz
+  sim_path: /opt/dlami/nvme/external/dairlib_admm_adaptive/examples/c3_python
+  holdout_fraction: 0.1
+  split_seed: 0
+  batch_size: 256
+  weight: 1.0
+  contact_threshold_n: 0.1
+  rollout_episodes: 30
+  rollout_steps: 400
+  rollout_seed: 1000
+video_world_model:
+  src: /opt/dlami/nvme/external/cosmos_predict2_src
+  data_dir: /opt/dlami/nvme/sharpadex_wm
+  tasks:
+  - clean_plate_with_eraser
+  camera: head_left
+  frame_stride: 3
+  chunk_frames: 13
+  image_size: 480
+  train_size: 320
+  action: target_minus_state
+  action_scale_rad: 0.25
+  batch_size: 4
+  lr: 3.0e-05
+  steps: 6000
+  save_every: 1000
+  num_workers: 16
+  out_dir: /opt/dlami/nvme/sharpadex_wm/runs/eraser_head
+  sample_steps: 20
+rl:
+  out_dir: /opt/dlami/nvme/sharpadex_rl
+  judge:
+    model: Qwen/Qwen2.5-VL-7B-Instruct
+    camera: head_left
+    stride: 30
+    lookback:
+    - 60
+    - 30
+    image_size: 336
+    batch_size: 8

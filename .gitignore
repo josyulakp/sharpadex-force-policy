@@ -1,0 +1,24 @@
+# environment, caches, secrets
+.venv/
+__pycache__/
+*.pyc
+.openai_key
+/*.log
+sim/cache/
+
+# not ours to redistribute: the task brief and third-party papers / media
+Robot_Learning_Sharpa.pdf
+resources/
+reports/eden_simtoolreal_sharpa.mp4
+
+# the written report is sent separately
+reports/report.pdf
+scripts/make_report.py
+
+# weights and per-frame evaluation arrays live in the Hugging Face model repository (release.hf_repo in configs/default.yaml),
+# at the same relative paths: `hf download <repo> --local-dir .` puts them back
+runs/**/*.pt
+runs/**/*.npz
+reports/**/*.npz
+checkpoints/
+.cache/

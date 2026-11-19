@@ -1,0 +1,243 @@
+<title>Force Policy Anatomy</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* layout: one column; the model drawn top-to-bottom as a signal path, switches beside it, measurements below */
+:root{
+  --bg:#f7f8f8; --surface:#fcfcfb; --ink:#0f1413; --ink2:#4c5553; --ink3:#7b8482; --rule:#dfe3e2; --band:#e9eeec;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --force:#2a78d6; --forcebg:#e6effa;
+  --sans:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121514; --surface:#1a1d1c; --ink:#eef1f0; --ink2:#bcc4c1; --ink3:#8a9390; --rule:#2e3432; --band:#252b29;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --force:#3987e5; --forcebg:#18283d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121514; --surface:#1a1d1c; --ink:#eef1f0; --ink2:#bcc4c1; --ink3:#8a9390; --rule:#2e3432; --band:#252b29;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --force:#3987e5; --forcebg:#18283d; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+h1{font-size:28px;font-weight:600;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:19px;font-weight:600;margin:0;text-wrap:balance}
+h3{font-size:14px;font-weight:600;margin:0}
+p{margin:0;max-width:68ch;color:var(--ink2)}
+section{display:flex;flex-direction:column;gap:14px;min-width:0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+.mono{font-family:var(--mono);font-size:12.5px}
+.grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.flow{display:flex;flex-direction:column;gap:6px}
+.row{display:flex;flex-wrap:wrap;gap:6px}
+.stage{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3);margin-top:6px}
+.arrow{text-align:center;color:var(--ink3);font-size:13px;line-height:1}
+.blk{flex:1 1 104px;min-width:0;text-align:left;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--rule);border-radius:4px;padding:7px 9px;cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.blk b{font-size:13px;font-weight:600}
+.blk span{font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.blk.force{border-color:var(--force);background:var(--forcebg)}
+.blk.wide{flex-basis:100%}
+.blk.off{border-style:dashed;border-color:var(--ink3);background:transparent}
+.blk.off b{color:var(--ink3);text-decoration:line-through}
+.blk[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:1px}
+.blk:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.sw{display:flex;flex-direction:column;gap:8px}
+.sw label{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;cursor:pointer}
+.sw input{margin-top:3px}
+.sw small{display:block;color:var(--ink3);font-size:12px}
+select{font:13px var(--sans);padding:3px 6px;background:var(--surface);color:var(--ink);border:1px solid var(--rule);border-radius:4px;max-width:100%}
+.result{border-top:1px solid var(--rule);padding-top:10px;display:flex;flex-direction:column;gap:6px}
+.nums{display:flex;flex-wrap:wrap;gap:6px 22px}
+.num{display:flex;flex-direction:column}
+.num b{font:500 18px var(--mono);font-variant-numeric:tabular-nums}
+.num span{font-size:12px;color:var(--ink3)}
+.detail{min-height:92px}
+.detail p{font-size:13.5px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px}
+ol,ul{margin:0;padding-left:18px;color:var(--ink2);display:flex;flex-direction:column;gap:6px;font-size:14px}
+.eq{font-family:var(--mono);font-size:12.5px;background:var(--band);border-radius:4px;padding:8px 10px;overflow-x:auto;white-space:nowrap;color:var(--ink)}
+.chead{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--ink2)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+.bars{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 10px;align-items:center;font-size:13px}
+.bars .lab{color:var(--ink2)} .bars .lab small{color:var(--ink3);font-family:var(--mono);font-size:11px}
+.pair{display:flex;flex-direction:column;gap:2px}
+.bar{display:flex;align-items:center;gap:6px;height:12px}
+.bar i{display:block;height:100%;border-radius:0 3px 3px 0;min-width:1px}
+.bar span{font-family:var(--mono);font-size:11px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;font-size:13px;width:100%;min-width:520px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--rule);text-align:left;white-space:nowrap}
+th{font-weight:500;color:var(--ink3);font-size:12px}
+td .g{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-variant-numeric:tabular-nums}
+td .g i{display:block;height:10px;background:var(--s1);border-radius:0 3px 3px 0}
+td .g u{display:block;width:70px;height:10px;background:var(--band);border-radius:3px;text-decoration:none;overflow:hidden}
+.note{font-size:13px;color:var(--ink3);max-width:72ch}
+</style>
+<div class="wrap">
+  <section>
+    <div class="eyebrow">SharpaDex · clean_plate_with_eraser · 6.72 M trainable parameters</div>
+    <h1>A small policy that reads force, predicts force, and decides before it acts</h1>
+    <p>At 30 Hz the model reads three cameras, the last 0.33 s of joint positions, fingertip forces and joint torques, and outputs the next 16 joint targets (0.53 s), the fingertip forces it expects over the same steps, and three short decisions about what comes next. Blue marks every place where force enters.</p>
+  </section>
+
+  <section>
+    <h2>The model, top to bottom</h2>
+    <p>Select a block to see what it does. The switches on the right are the same ones in <span class="mono">configs/default.yaml</span>; flipping them shows what changes in the network and the held-out error of that trained variant.</p>
+    <div class="grid">
+      <div class="panel">
+        <div class="flow" id="flow"></div>
+        <div class="detail" id="detail"></div>
+      </div>
+      <div class="panel">
+        <h3>Force switches</h3>
+        <div class="sw">
+          <label><input type="checkbox" id="sw_tac" checked><span>Fingertip force input<small>10 fingertips × force and torque, 6 past frames</small></span></label>
+          <label for="sw_tor" style="flex-direction:column;gap:3px"><span>Joint torque input<small>58 arm and hand joints, 6 past frames</small></span>
+            <select id="sw_tor"><option value="all">all joints</option><option value="arms">arms only</option><option value="hands">hands only</option><option value="off">off</option></select></label>
+          <label><input type="checkbox" id="sw_out" checked><span>Predict fingertip force<small>extra output and loss next to the action</small></span></label>
+          <label><input type="checkbox" id="sw_res"><span>Force head predicts change from now<small>the residual head</small></span></label>
+          <label><input type="checkbox" id="sw_dec" checked><span>Force-based decision labels<small>contact-soon and force-level slots are trained</small></span></label>
+          <label><input type="checkbox" id="sw_zero"><span>Test time: set force inputs to zero<small>same weights, measured zeros fed in</small></span></label>
+        </div>
+        <div class="result" id="result"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>How it was trained</h2>
+    <p>Everything is trained together from scratch in one run of 8,000 steps (about 15 minutes on one GPU). Only the camera encoder is pretrained and frozen; its outputs are computed once and stored.</p>
+    <div class="eq">loss = 1.0 · |action − target| + 0.5 · |force − target| + 0.2 · (phase + contact-soon + force-level)</div>
+    <ul>
+      <li>Action target: the operator's commanded joint position at each of the next 16 frames, minus the current joint position, divided by that joint's typical step size.</li>
+      <li>Batch 256 random frames, AdamW at 3e-4 with 500 warm-up steps and cosine decay, 16-bit mixed precision, dropout 0.1.</li>
+      <li>Input scaling uses training episodes only. The 10% held-out episodes are never seen.</li>
+    </ul>
+    <div class="cols">
+      <div class="panel">
+        <h3>Mixture of experts (action head)</h3>
+        <ol>
+          <li>Two small networks (256 → 256 → 58 joints each) read the same 16 action slots and each propose a full action chunk.</li>
+          <li>The three decision slots are joined and passed through one linear layer and a softmax. That gives two weights per frame, the same for all 16 steps.</li>
+          <li>The output is the weighted sum of the two proposals.</li>
+          <li>The only training signal is the action loss on that sum. There is no label for which expert to use, no balance penalty and no pretraining of either expert.</li>
+        </ol>
+        <p style="font-size:14px">Because the gate reads the decision slots, and those slots are also trained to predict phase, contact and force level, the gate can split by those. Whether it does is measured below.</p>
+      </div>
+      <div class="panel">
+        <h3>Residual force head</h3>
+        <ol>
+          <li>The plain head predicts the fingertip force vector (10 fingertips × 3 axes) at each of the next 16 frames, divided by 10 N.</li>
+          <li>The residual head predicts the same thing minus the force measured right now, so its target is zero whenever force does not change.</li>
+          <li>The measured force is added back to give newtons. Loss and weight are identical.</li>
+          <li>It needs the fingertip force input. With that input off, or zeroed at test time, it falls back to predicting from zero.</li>
+        </ol>
+        <p style="font-size:14px" id="res_txt"></p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What is active for which input</h2>
+    <p>Three measurements on the 19,079 held-out frames, split by whether a fingertip is in contact (above 1 N).</p>
+
+    <div class="panel">
+      <div class="chead"><h3>How much the action changes when one input is swapped for another frame's</h3>
+        <select id="ko_model" aria-label="Model"><option value="full">model with force</option><option value="no_force">model without force</option></select>
+        <div class="legend"><span><i style="background:var(--s1)"></i>in contact</span><span><i style="background:var(--s2)"></i>free motion</span></div></div>
+      <div class="bars" id="ko"></div>
+      <div class="note">Mean change of the 16-step prediction in mrad, averaged over 3 seeds. Larger means the model relies on that input more.</div>
+    </div>
+
+    <div class="panel">
+      <div class="chead"><h3>Where the query slots look</h3>
+        <select id="at_slot" aria-label="Query slot"></select>
+        <div class="legend"><span><i style="background:var(--s1)"></i>in contact</span><span><i style="background:var(--s2)"></i>free motion</span></div></div>
+      <div class="bars" id="at"></div>
+      <div class="note">Share of decoder attention on each input group, model with force, seed 0, averaged over the 3 decoder layers. Attention shows where a slot reads from, not how much the output depends on it.</div>
+    </div>
+
+    <div class="panel">
+      <div class="chead"><h3>Which expert the gate picks</h3></div>
+      <div class="tw"><table id="gate"></table></div>
+      <div class="note" id="gate_note"></div>
+    </div>
+    <ul id="findings"></ul>
+  </section>
+</div>
+<script>
+const A = {full: /*ACT_FULL*/null, no_force: /*ACT_NOFORCE*/null}, R = /*RESULTS*/null, Z = /*ZERO*/null;
+const $ = s => document.querySelector(s), P = A.full.seeds.seed0.params, k = n => (n / 1e3).toFixed(n > 1e5 ? 0 : 1) + " k";
+const BL = [
+ ["Inputs", [
+  ["cam", "3 cameras", "51 tokens", "", `Head, left wrist and right wrist images at 224 px go through a frozen DINOv2-small encoder. Each camera gives 17 tokens: one summary token and a 4 × 4 grid of pooled patches. A trained projection (${k(P.vis_proj)} parameters) maps them to width 256. The encoder itself is not trained and its outputs are cached on disk.`],
+  ["state", "Joint positions", "6 tokens", "", `The 58 arm and hand joint angles at 6 past frames spaced 2 apart (0.33 s). One token per frame.`],
+  ["tac", "Fingertip force", "6 tokens", "force", `Force and torque at the 10 fingertips (60 numbers) at the same 6 frames. Switched off, all six tokens are replaced by one learned "not available" token, so the network keeps its size. That is different from feeding a measured zero.`],
+  ["tor", "Joint torque", "6 tokens", "force", `Torque at the 58 arm and hand joints at the same 6 frames. It can be limited to arm joints or hand joints; the others are then set to their average. Switched off, the tokens become a learned "not available" token.`],
+  ["task", "Task", "1 token", "", `A learned vector per task. With one task it carries no information; it is there for the three-task model and the swapped-instruction check.`]]],
+ ["Encoder", [["enc", "Transformer encoder", "4 layers · width 256 · 70 tokens in, 70 out", "wide", `All 70 tokens attend to each other once per time step. The result is kept as a cache that every query below reads from. ${k(P.encoder)} parameters, about half the model.`]]],
+ ["Decoder: learned query slots read the cache", [
+  ["chunk", "16 action slots", "one per future frame", "", `Sixteen learned queries, one for each of the next 16 frames. Through 3 decoder layers (${k(P.decoder)} parameters, shared with the decision slots) each gathers what it needs from the cache. Their outputs feed the experts and the force head.`],
+  ["dslots", "3 decision slots", "contact · phase · force level", "", `Three more learned queries in the same decoder. Each ends in its own small head, and all three together drive the expert gate. The idea comes from decision-engine designs: encode the situation once, then ask separate typed questions of it.`]]],
+ ["Heads", [
+  ["exp", "Expert A + Expert B", "action proposals", "", `Two networks of 256 → 256 → 58 (${k(P.experts)} parameters together). Each turns the 16 action slots into a full chunk of joint-target changes.`],
+  ["gate", "Gate", "2 weights per frame", "", `One linear layer on the three decision slots joined together (${P.gate.toLocaleString()} parameters), then a softmax. The action is the weighted sum of the two experts. No separate loss.`],
+  ["fh", "Force head", "30 forces × 16 frames", "force", `Predicts the force vector at each fingertip for frames t+1 to t+16 from the same action slots (${k(P.force_head)} parameters). With the residual option it predicts the change from the force measured now.`],
+  ["dc", "Contact soon?", "yes / no", "force", `Will any fingertip exceed 1 N ten frames (0.33 s) from now? The label comes from the force recording, so it is one of the ways force is used.`],
+  ["dp", "Phase", "pick · wipe · place · none", "", `Which annotated step of the task the frame belongs to. The label comes from the dataset annotation, not from force, so it stays on in every variant.`],
+  ["dl", "Force level", "none · light · firm · high", "force", `Largest fingertip force ten frames from now, in ordered bins split at 1, 5 and 15 N. One score against ordered thresholds, so "firm" is closer to "high" than to "none".`]]]];
+const flow = $("#flow"), info = {};
+BL.forEach(([stage, blocks], i) => {
+  if (i) flow.insertAdjacentHTML("beforeend", `<div class="arrow" aria-hidden="true">▼</div>`);
+  flow.insertAdjacentHTML("beforeend", `<div class="stage">${stage}</div>`);
+  const row = document.createElement("div"); row.className = "row"; flow.appendChild(row);
+  blocks.forEach(([id, name, sub, cls, txt]) => { info[id] = [name, txt];
+    const b = document.createElement("button"); b.type = "button"; b.id = "b_" + id; b.className = "blk " + cls; b.dataset.cls = cls; b.innerHTML = `<b>${name}</b><span>${sub}</span>`; b.onclick = () => pick(id); row.appendChild(b); });
+});
+let sel = "tac", state = {};
+function pick(id) { sel = id; document.querySelectorAll(".blk").forEach(b => b.setAttribute("aria-pressed", b.id === "b_" + id));
+  const extra = {tac: state.tac ? (state.zero ? "Now: fed zeros." : "") : "Now: replaced by the learned \"not available\" token.", tor: state.tor === "off" ? "Now: replaced by the learned \"not available\" token." : state.zero ? "Now: fed zeros." : state.tor !== "all" ? `Now: ${state.tor} only.` : "",
+    fh: !state.out ? "Now: no loss, so this head is untrained and unused." : state.res ? "Now: predicting the change from the current force." : "", dc: state.dec ? "" : "Now: no loss, untrained.", dl: state.dec ? "" : "Now: no loss, untrained.",
+    gate: state.dec ? "" : "Now: two of the three slots it reads get no training signal of their own."}[id] || "";
+  $("#detail").innerHTML = `<h3>${info[id][0]}</h3><p>${info[id][1]} <b>${extra}</b></p>`; }
+const VAR = {"1|all|1|0|1": "full", "0|off|0|0|0": "no_force", "0|all|1|0|1": "no_tactile_input", "1|off|1|0|1": "no_torque_input", "1|all|0|0|1": "no_force_output", "1|all|1|0|0": "no_decision_supervision", "1|all|1|1|1": "full_residual_force", "1|arms|1|0|1": "torque_arms_only", "1|hands|1|0|1": "torque_hands_only"};
+function update() {
+  const s = state = {tac: $("#sw_tac").checked, tor: $("#sw_tor").value, out: $("#sw_out").checked, res: $("#sw_res").checked, dec: $("#sw_dec").checked, zero: $("#sw_zero").checked};
+  $("#sw_res").disabled = !(s.tac && s.out); if ($("#sw_res").disabled) { $("#sw_res").checked = false; s.res = false; }
+  const off = {tac: !s.tac, tor: s.tor === "off", fh: !s.out, dc: !s.dec, dl: !s.dec};
+  for (const id in off) $("#b_" + id).className = "blk " + (off[id] ? "off" : $("#b_" + id).dataset.cls);
+  const v = VAR[[+s.tac, s.tor, +s.out, +s.res, +s.dec].join("|")], src = s.zero ? Z : R, m = x => (x * 1e3).toFixed(1);
+  let h;
+  if (v && src.act[v]) { const a = src.act[v], f = s.out && src.force[v], ref = R.act.no_force;
+    h = `<h3>Held-out error of this variant <span class="mono" style="font-weight:400;color:var(--ink3)">${v}${s.zero ? " · zeroed" : ""}</span></h3><div class="nums">
+      <div class="num"><b>${m(a.contact.mean)} mrad</b><span>action, in contact [${m(a.contact.lo)}, ${m(a.contact.hi)}]</span></div>
+      <div class="num"><b>${m(a.free.mean)} mrad</b><span>action, free motion [${m(a.free.lo)}, ${m(a.free.hi)}]</span></div>
+      ${f ? `<div class="num"><b>${f.all.mean.toFixed(2)} N</b><span>force, all frames (force stays as it is: 0.40 N)</span></div>` : ""}</div>
+      <p style="font-size:13px">Without any force the model scores ${m(ref.contact.mean)} mrad in contact and ${m(ref.free.mean)} in free motion. 34 episodes, 3 seeds, 95% intervals.</p>`; }
+  else h = `<h3>This combination was not trained</h3><p style="font-size:13px">Nine combinations were trained: all on, all off, each of the four ways off alone, torque from arms or hands only, and the residual head.</p>`;
+  $("#result").innerHTML = h; pick(sel);
+}
+["tac", "tor", "out", "res", "dec", "zero"].forEach(i => $("#sw_" + i).addEventListener("change", update)); update();
+
+const avg = (m, f) => { const s = Object.values(A[m].seeds).map(f); return s.reduce((a, b) => a + b, 0) / s.length; };
+function bars(host, rows, max, fmt) { host.innerHTML = rows.map(([lab, sub, c, f]) => `<div class="lab">${lab}${sub ? ` <small>${sub}</small>` : ""}</div><div class="pair">${[[c, "--s1"], [f, "--s2"]].map(([v, col]) => `<div class="bar"><i style="width:${(v / max * 82).toFixed(1)}%;background:var(${col})"></i><span>${fmt(v)}</span></div>`).join("")}</div>`).join(""); }
+function ko() { const m = $("#ko_model").value, G = [["cameras", "Cameras"], ["joint state", "Joint positions"], ["fingertip force", "Fingertip force"], ["joint torque", "Joint torque"]];
+  bars($("#ko"), G.map(([g, n]) => [n, "", avg(m, s => s.knockout_mrad[g].contact), avg(m, s => s.knockout_mrad[g].free)]), 85, v => v.toFixed(1) + " mrad"); }
+$("#ko_model").onchange = ko; ko();
+const AT = A.full.seeds.seed0.attention, GN = {"camera head_left": "Head camera", "camera wrist_left": "Left wrist camera", "camera wrist_right": "Right wrist camera", "joint state": "Joint positions", "fingertip force": "Fingertip force", "joint torque": "Joint torque", task: "Task"};
+Object.keys(AT.slots).forEach(s => $("#at_slot").add(new Option(s, s)));
+function at() { const s = AT.slots[$("#at_slot").value]; bars($("#at"), AT.groups.map((g, i) => [GN[g], AT.tokens[i] + " tok", s.contact[i], s.free[i]]), 0.45, v => (v * 100).toFixed(0) + "%"); }
+$("#at_slot").onchange = at; at();
+const conds = ["contact", "free", "phase: pick", "phase: wipe", "phase: place", "phase: none"], CN = ["In contact", "Free motion", "Pick", "Wipe", "Place", "Between steps"];
+$("#gate").innerHTML = `<tr><th>Weight on expert A</th>${Object.keys(A.full.seeds).map(s => `<th>${s.replace("seed", "Seed ")}</th>`).join("")}</tr>` + conds.map((c, i) => `<tr><td>${CN[i]}</td>${Object.values(A.full.seeds).map(s => { const g = s.gate[c][0]; return `<td><div class="g"><u><i style="width:${g * 100}%"></i></u>${g.toFixed(2)}</div></td>`; }).join("")}</tr>`).join("");
+const sep = c => avg("full", s => s.expert_separation_mrad[c]).toFixed(0);
+$("#gate_note").textContent = `Model with force, mean gate weight over held-out frames. "Expert A" is simply the first of the two; the networks start from different random weights, so which one takes which role is free to differ between seeds. The two experts' proposals differ by ${sep("contact")} mrad on average in contact and ${sep("free")} mrad in free motion.`;
+const K = (m, g, c) => avg(m, s => s.knockout_mrad[g][c]).toFixed(1), a0 = AT.slots[Object.keys(AT.slots)[0]], fi = AT.groups.indexOf("fingertip force");
+$("#findings").innerHTML = [
+ `Joint positions dominate: swapping them changes the action by ${K("full", "joint state", "contact")} mrad in contact and ${K("full", "joint state", "free")} in free motion. Joint torque comes second (${K("full", "joint torque", "contact")} and ${K("full", "joint torque", "free")}).`,
+ `Fingertip force is the only input that matters more in contact than in free motion (${K("full", "fingertip force", "contact")} vs ${K("full", "fingertip force", "free")} mrad). The action slots put ${(a0.contact[fi] * 100).toFixed(0)}% of their attention on it in contact and ${(a0.free[fi] * 100).toFixed(0)}% in free motion.`,
+ `Force replaces part of the cameras. The model without force changes by ${K("no_force", "cameras", "contact")} mrad in contact when the cameras are swapped; the model with force changes by ${K("full", "cameras", "contact")}.`,
+ `The gate does switch with the task step within a run, but not the same way in every run. In seeds 0 and 2 one expert takes about 0.9 of the weight during wiping; in seed 1 the split is only 0.35 / 0.65. During picking the three seeds put 0.30, 0.49 and 0.68 on expert A. So the experts are not a stable "contact expert" and "free-motion expert".`,
+ `A single-expert model was not trained, so there is no measurement yet of whether the mixture lowers error at all.`].map(t => `<li>${t}</li>`).join("");
+const fr = R.force;
+$("#res_txt").textContent = `Result on held-out frames: plain head ${fr.full.all.mean.toFixed(2)} N, worse than assuming the force stays as it is (0.40 N). Residual head ${fr.full_residual_force.all.mean.toFixed(2)} N [${fr.full_residual_force.all.lo.toFixed(2)}, ${fr.full_residual_force.all.hi.toFixed(2)}], slightly better than that baseline but with an interval that includes it. Action error is unchanged.`;
+</script>

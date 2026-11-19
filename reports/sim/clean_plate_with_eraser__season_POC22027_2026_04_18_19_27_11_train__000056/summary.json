@@ -1,0 +1,78 @@
+{
+ "objects": {
+  "plate_xyz": [
+   0.5171,
+   0.0337,
+   0.8317
+  ],
+  "plate_radius": 0.10249092444170113,
+  "plate_radius_stereo": 0.10249092444170113,
+  "plate_grasp_frame": 161,
+  "table_z": 0.7819524950156219,
+  "eraser_xyz": [
+   0.5528,
+   -0.1844,
+   0.8389
+  ],
+  "eraser_yaw": 0.9439160659392508,
+  "eraser_grasp_frame": 242,
+  "eraser_grasp_tip_z": 0.8192069505743704,
+  "lowest_tip_z_left_right": [
+   0.7884,
+   0.8029
+  ],
+  "plate_top_z": 0.8316605628234106,
+  "plate_top_z_stereo": 0.8316605628234106
+ },
+ "recorded": {
+  "plate_lifted": false,
+  "eraser_lifted": true,
+  "plate_max_lift_cm": 2.0337007164800025,
+  "eraser_max_lift_cm": 16.97192006261935,
+  "wipe_s": 0.03333333333333333,
+  "wipe_path_cm": 0.8911951398074344,
+  "wipe_mean_force_n": 1.007260309102376,
+  "contact_share_sim": 0.20419847328244276,
+  "contact_share_real": 0.5954198473282443,
+  "peak_force_sim_n": 34.88604556830324,
+  "peak_force_real_n": 45.35508389988624,
+  "mean_contact_force_sim_n": 17.338033850812906,
+  "mean_contact_force_real_n": 18.41166578782848,
+  "hand_base_tracking_mm": 16.53174454616308,
+  "final_plate_drop_cm": 0.0014789059160413842
+ },
+ "full": {
+  "plate_lifted": false,
+  "eraser_lifted": true,
+  "plate_max_lift_cm": 1.6671292438630747,
+  "eraser_max_lift_cm": 16.643518608294073,
+  "wipe_s": 0.6,
+  "wipe_path_cm": 8.983380423005464,
+  "wipe_mean_force_n": 14.318177300835437,
+  "contact_share_sim": 0.3282442748091603,
+  "contact_share_real": 0.5954198473282443,
+  "peak_force_sim_n": 39.98319673237164,
+  "peak_force_real_n": 45.35508389988624,
+  "mean_contact_force_sim_n": 19.42237183345104,
+  "mean_contact_force_real_n": 18.41166578782848,
+  "hand_base_tracking_mm": 16.530860996892166,
+  "final_plate_drop_cm": 0.001636908072932819
+ },
+ "no_force": {
+  "plate_lifted": true,
+  "eraser_lifted": true,
+  "plate_max_lift_cm": 11.384240868847261,
+  "eraser_max_lift_cm": 26.04597886789033,
+  "wipe_s": 0.9,
+  "wipe_path_cm": 10.329612802026896,
+  "wipe_mean_force_n": 11.773167352972878,
+  "contact_share_sim": 0.4580152671755725,
+  "contact_share_real": 0.5954198473282443,
+  "peak_force_sim_n": 58.22707820598764,
+  "peak_force_real_n": 45.35508389988624,
+  "mean_contact_force_sim_n": 17.623370119810893,
+  "mean_contact_force_real_n": 18.41166578782848,
+  "hand_base_tracking_mm": 16.576958752923964,
+  "final_plate_drop_cm": 1.898135006800994
+ }
+}

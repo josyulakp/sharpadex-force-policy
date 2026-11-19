@@ -1,0 +1,256 @@
+data:
+  root: /opt/dlami/nvme/sharpadex
+  format: lerobot_v2.1
+  fps: 30
+  tasks:
+  - clean_plate_with_eraser
+  - insert_plug_into_socket
+  - remove_block_from_box
+  holdout_fraction: 0.1
+  split_seed: 0
+  train_episode_share: 0.25
+  subset_seed: 0
+  contact_threshold_n: 1.0
+  use_torso: false
+force:
+  tactile_input: true
+  torque_input: true
+  torque_joints: all
+  force_output: true
+  decision_supervision: true
+vision:
+  cameras:
+  - head_left
+  - wrist_left
+  - wrist_right
+  encoder: vit_small_patch14_dinov2.lvd142m
+  image_size: 224
+  pool_grid: 4
+  batch_size: 512
+  num_workers: 16
+  cache_dir: /opt/dlami/nvme/sharpadex_cache
+model:
+  d_model: 256
+  n_heads: 4
+  enc_layers: 4
+  dec_layers: 3
+  ff_mult: 4
+  dropout: 0.1
+  obs_history: 6
+  obs_stride: 2
+  chunk: 16
+  head: regression
+  flow:
+    sample_steps: 10
+    time_beta:
+    - 1.5
+    - 1.0
+    force_weight: 0.1
+    sample_seed: 0
+    force_scale: auto
+  n_experts: 2
+  expert_layout: mixture
+  gate_source: learned
+  force_residual: true
+  force_world_model:
+    enabled: false
+    hidden: 192
+    predicted_action_prob: 0.0
+  wrench_expert:
+    enabled: true
+    window: 10
+    wrench_tokens: true
+    filter_window: 5
+    weight: 1.0
+    wrench_weight: 0.1
+  tactile_expert:
+    enabled: true
+    tokens: 16
+    latent_dim: 128
+    predicted_tokens: true
+    weight: 1.0
+  energy:
+    enabled: false
+    update: gradient
+    init: decoder
+    layers: 2
+    steps: 6
+    graded_steps: 3
+    step_size: 5.0
+    noise: 0.05
+    interior_weight: 0.5
+    explore_k: 1
+    eval_samples: 1
+    eval_seed: 0
+  advantage:
+    enabled: false
+    contact_weight: 1.0
+  decision:
+    horizon: 10
+    force_levels_n:
+    - 1.0
+    - 5.0
+    - 15.0
+train:
+  seed: 2
+  steps: 8000
+  batch_size: 256
+  lr: 0.0003
+  weight_decay: 0.01
+  warmup_steps: 500
+  grad_clip: 1.0
+  amp: true
+  action_loss: l1
+  ht:
+    nu_per_dim: 4.0
+    min_scale: 0.001
+    calibration_frames: 2048
+  w_action: 1.0
+  w_force: 0.5
+  w_decision: 0.2
+  force_scale_n: 10.0
+  log_every: 200
+  out_root: runs
+  name: scaling_four_experts/full_25
+  eval_at: []
+  init_exclude: experts.1
+  init_from: null
+eval:
+  batch_size: 1024
+  zero_force: false
+  swap_task: null
+  guidance: 1.0
+  flow_noise_scale: 1.0
+  bootstrap_samples: 2000
+  ci: 0.95
+report:
+  out_dir: reports/data
+  split_dir: splits
+  thresholds_sweep_n:
+  - 0.25
+  - 0.5
+  - 1.0
+  - 2.0
+  - 3.0
+  - 5.0
+  - 10.0
+  num_workers: 32
+rollout:
+  group: eraser_force
+  action_variants:
+  - full
+  - no_force
+  force_variants:
+  - full
+  - full_residual_force
+  seed: 0
+  execute_steps: 8
+  n_heldout: 3
+  n_train: 1
+  cameras:
+  - head_left
+  - wrist_left
+  - wrist_right
+  video_height: 240
+  video_stride: 2
+  out_dir: reports/rollouts
+mpc:
+  enabled: false
+  data: /opt/dlami/nvme/external/dairlib_admm_adaptive/examples/c3_python/data/c3_finger_ball.npz
+  sim_path: /opt/dlami/nvme/external/dairlib_admm_adaptive/examples/c3_python
+  holdout_fraction: 0.1
+  split_seed: 0
+  batch_size: 256
+  weight: 1.0
+  contact_threshold_n: 0.1
+  rollout_episodes: 30
+  rollout_steps: 400
+  rollout_seed: 1000
+video_world_model:
+  src: /opt/dlami/nvme/external/cosmos_predict2_src
+  data_dir: /opt/dlami/nvme/sharpadex_wm
+  tasks:
+  - clean_plate_with_eraser
+  camera: head_left
+  frame_stride: 3
+  chunk_frames: 13
+  image_size: 480
+  train_size: 320
+  action: target_minus_state
+  action_scale_rad: 0.25
+  batch_size: 4
+  lr: 3.0e-05
+  steps: 6000
+  save_every: 1000
+  num_workers: 16
+  out_dir: /opt/dlami/nvme/sharpadex_wm/runs/eraser_head
+  sample_steps: 20
+primesim_world_model:
+  src: /opt/dlami/nvme/external/primesim_src
+  data_dir: /opt/dlami/nvme/sharpadex_ps/data
+  task: clean_plate_with_eraser
+  image_size: 256
+  action_dim: 75
+  train:
+    max_train_steps: 6000
+    lr_warmup_steps: 300
+    learning_rate: 0.0001
+    batch_size: 4
+    save_steps: 1000
+    save_frame_steps: 1000
+rl:
+  out_dir: /opt/dlami/nvme/sharpadex_rl
+  judge_api:
+    model: gpt-6-luna
+    effort: medium
+    workers: 8
+    retries: 5
+  judge_dir: /opt/dlami/nvme/sharpadex_rl/judge
+  reward:
+    judge: annotation
+    gamma: 0.99
+    beta: 1.0
+    time_budget_quantile: 0.9
+    alpha: 0.1
+    envelope_quantile: 0.99
+  critic:
+    encoder_run: runs/flow/full_wrench_expert/seed0
+    atoms: 201
+    v_min: -10.0
+    v_max: 10.0
+    hidden: 512
+    steps: 80000
+    batch_size: 4096
+    lr: 0.0003
+    target_ema: 0.005
+    seed: 0
+  credit:
+    horizon: 20
+    positive_fraction: 0.2
+    filter_window: 5
+    lag: 8
+    episode_quantile: 0.8
+    corpus_quantile: 0.5
+  judge:
+    model: Qwen/Qwen2.5-VL-7B-Instruct
+    camera: head_left
+    stride: 30
+    lookback:
+    - 60
+    - 30
+    image_size: 336
+    batch_size: 8
+    question: count
+    quant: none
+tactile_world_model:
+  src: /opt/dlami/nvme/external/tacforesight_src
+  packages: /opt/dlami/nvme/external/tf_pkgs
+  data_dir: /opt/dlami/nvme/sharpadex_tf
+  task: clean_plate_with_eraser
+  map_rows: 7
+  horizon: 8
+  epochs: 30
+  batch_size: 64
+  run_name: sharpa_eraser
+release:
+  hf_repo: josyula/sharpadex-force-policy

@@ -1,0 +1,129 @@
+/opt/pytorch/lib/python3.12/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+seed1: 260 train episodes, 116402 frames (1.08 h), 7.57 M params
+  step     0 loss 2.3621 action 0.4830 force 0.1772 decision 3.4895  1s
+  step   200 loss 1.2174 action 0.3578 force 0.0437 decision 0.4023  36s
+  step   400 loss 0.9940 action 0.2871 force 0.0312 decision 0.3278  77s
+  step   600 loss 0.7893 action 0.2220 force 0.0301 decision 0.3229  118s
+  step   800 loss 0.7159 action 0.2035 force 0.0242 decision 0.2874  157s
+  step  1000 loss 0.6492 action 0.1852 force 0.0262 decision 0.2268  197s
+  step  1200 loss 0.6891 action 0.1970 force 0.0283 decision 0.2408  237s
+  step  1400 loss 0.5761 action 0.1649 force 0.0232 decision 0.1814  278s
+  step  1600 loss 0.5227 action 0.1454 force 0.0277 decision 0.1976  323s
+  step  1800 loss 0.5641 action 0.1608 force 0.0235 decision 0.1805  364s
+  step  2000 loss 0.6124 action 0.1757 force 0.0274 decision 0.1834  406s
+  step  2200 loss 0.5171 action 0.1445 force 0.0248 decision 0.1929  446s
+  step  2400 loss 0.5282 action 0.1486 force 0.0257 decision 0.1858  487s
+  step  2600 loss 0.5528 action 0.1586 force 0.0215 decision 0.1717  531s
+  step  2800 loss 0.4997 action 0.1399 force 0.0217 decision 0.1840  574s
+  step  3000 loss 0.4822 action 0.1396 force 0.0182 decision 0.1186  614s
+  step  3200 loss 0.4520 action 0.1324 force 0.0193 decision 0.0874  654s
+  step  3400 loss 0.5283 action 0.1511 force 0.0223 decision 0.1478  696s
+  step  3600 loss 0.4320 action 0.1202 force 0.0231 decision 0.1398  735s
+  step  3800 loss 0.4228 action 0.1209 force 0.0201 decision 0.1118  776s
+  step  4000 loss 0.4508 action 0.1268 force 0.0223 decision 0.1254  818s
+  step  4200 loss 0.4260 action 0.1202 force 0.0213 decision 0.1204  862s
+  step  4400 loss 0.4226 action 0.1194 force 0.0179 decision 0.1289  902s
+  step  4600 loss 0.3866 action 0.1064 force 0.0201 decision 0.1504  949s
+  step  4800 loss 0.4039 action 0.1125 force 0.0203 decision 0.1399  1002s
+  step  5000 loss 0.3691 action 0.1030 force 0.0214 decision 0.1066  1045s
+  step  5200 loss 0.4011 action 0.1159 force 0.0197 decision 0.0820  1088s
+  step  5400 loss 0.3545 action 0.0985 force 0.0213 decision 0.0994  1129s
+  step  5600 loss 0.3429 action 0.0973 force 0.0175 decision 0.0824  1172s
+  step  5800 loss 0.3428 action 0.0964 force 0.0193 decision 0.0894  1212s
+  step  6000 loss 0.3610 action 0.0977 force 0.0224 decision 0.1319  1255s
+  step  6200 loss 0.3555 action 0.1016 force 0.0179 decision 0.0730  1297s
+  step  6400 loss 0.3638 action 0.1020 force 0.0222 decision 0.0778  1339s
+  step  6600 loss 0.3637 action 0.1037 force 0.0195 decision 0.0723  1381s
+  step  6800 loss 0.3371 action 0.0946 force 0.0174 decision 0.0923  1421s
+  step  7000 loss 0.3532 action 0.1004 force 0.0183 decision 0.0685  1463s
+  step  7200 loss 0.3530 action 0.1001 force 0.0186 decision 0.0731  1507s
+  step  7400 loss 0.3560 action 0.0998 force 0.0192 decision 0.0923  1549s
+  step  7600 loss 0.3508 action 0.0993 force 0.0194 decision 0.0801  1591s
+  step  7800 loss 0.3459 action 0.0964 force 0.0194 decision 0.0904  1639s
+  step  7999 loss 0.3524 action 0.0982 force 0.0219 decision 0.0914  1695s
+/opt/pytorch/lib/python3.12/site-packages/torch/nn/modules/transformer.py:382: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  warnings.warn(
+{
+ "frames": 51258,
+ "contact_frames": 27778,
+ "episodes": 115,
+ "train_hours": 1.0777962962962964,
+ "force_output": true,
+ "decision_supervision": true,
+ "act": {
+  "all": 0.01720753125846386,
+  "contact": 0.016079258173704147,
+  "free": 0.0185423381626606
+ },
+ "act_arm": {
+  "all": 0.013380479998886585,
+  "contact": 0.013745270669460297,
+  "free": 0.01294891256839037
+ },
+ "act_hand": {
+  "all": 0.0184252317994833,
+  "contact": 0.016821889206767082,
+  "free": 0.02032206393778324
+ },
+ "act_first": {
+  "all": 0.009558015502989292,
+  "contact": 0.009272782132029533,
+  "free": 0.009895460680127144
+ },
+ "act_hold": {
+  "all": 0.046720486134290695,
+  "contact": 0.035629816353321075,
+  "free": 0.059841301292181015
+ },
+ "force": {
+  "all": 0.2242937684059143,
+  "contact": 0.3845636248588562,
+  "free": 0.03468656912446022
+ },
+ "force_persist": {
+  "all": 0.24216388165950775,
+  "contact": 0.41487449407577515,
+  "free": 0.0378386564552784
+ },
+ "force_peak": {
+  "all": 11.161706924438477,
+  "contact": 19.810222625732422,
+  "free": 0.9300844669342041
+ },
+ "force_wrench_expert": {
+  "all": 0.45493873953819275,
+  "contact": 0.7487271428108215,
+  "free": 0.10737249255180359
+ },
+ "act_wrench_expert": {
+  "all": 0.017543355002999306,
+  "contact": 0.016488416120409966,
+  "free": 0.018791398033499718
+ },
+ "act_tactile_expert": {
+  "all": 0.01783478818833828,
+  "contact": 0.016487110406160355,
+  "free": 0.019429154694080353
+ },
+ "act_rmse": {
+  "all": 0.05219225585460663,
+  "contact": 0.04228442907333374,
+  "free": 0.06189859285950661
+ },
+ "contact_soon_acc": 0.9657809512661438,
+ "phase_acc": 0.9429747462272644,
+ "level_mae": 0.13878808915615082,
+ "gate_wrench_contact_vs_free": [
+  0.48285654187202454,
+  0.5951618552207947
+ ],
+ "gate_tactile_contact_vs_free": [
+  0.3944535553455353,
+  0.38120874762535095
+ ],
+ "gate0_contact_vs_free": [
+  0.07222551852464676,
+  0.0009485136833973229
+ ]
+}

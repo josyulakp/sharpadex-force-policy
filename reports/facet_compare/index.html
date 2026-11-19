@@ -1,0 +1,166 @@
+<title>Facet-0 Versus Ours</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* layout: one column; two model stacks side by side on one set of rows, then the comparison table, then the two-sided verdict */
+:root{
+  --bg:#f7f8f8; --surface:#fcfcfb; --ink:#0f1413; --ink2:#4c5553; --ink3:#7b8482; --rule:#dfe3e2; --band:#e9eeec;
+  --a:#2a78d6; --abg:#e4eefb; --b:#a8541f; --bbg:#f8e9df;
+  --sans:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121514; --surface:#1a1d1c; --ink:#eef1f0; --ink2:#bcc4c1; --ink3:#8a9390; --rule:#2e3432; --band:#252b29;
+  --a:#6fa8ee; --abg:#16283f; --b:#e8a077; --bbg:#3a2417; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121514; --surface:#1a1d1c; --ink:#eef1f0; --ink2:#bcc4c1; --ink3:#8a9390; --rule:#2e3432; --band:#252b29;
+  --a:#6fa8ee; --abg:#16283f; --b:#e8a077; --bbg:#3a2417; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:30px}
+h1{font-size:28px;font-weight:600;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:18px;font-weight:600;margin:0;text-wrap:balance}
+h3{font-size:14px;font-weight:600;margin:0}
+p{margin:0;max-width:68ch;color:var(--ink2)}
+section,.lede{display:flex;flex-direction:column;gap:12px;min-width:0}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+.verdict{border-left:3px solid var(--ink);padding:2px 0 2px 14px}
+.verdict p{color:var(--ink)}
+.stacks{display:grid;grid-template-columns:110px minmax(0,1fr) minmax(0,1fr);gap:6px 10px;align-items:stretch}
+.stacks .hd{font-weight:600;font-size:14px;padding:6px 10px;border-radius:4px}
+.stacks .hd.a{background:var(--a);color:var(--bg)} .stacks .hd.b{background:var(--b);color:var(--bg)}
+.stacks .row{font:500 11px var(--mono);letter-spacing:.04em;text-transform:uppercase;color:var(--ink3);padding-top:9px}
+.cell{border-radius:4px;padding:8px 10px;font-size:13px;min-width:0;overflow-wrap:anywhere}
+.cell.a{background:var(--abg)} .cell.b{background:var(--bbg)}
+.cell b{display:block;font-weight:600;color:var(--ink)}
+.cell span{color:var(--ink2)}
+.cell small{font:11px var(--mono);color:var(--ink3);display:block;margin-top:2px}
+@media (max-width:640px){.stacks{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} .stacks .row{grid-column:1/-1;padding-top:10px} .stacks .sp{display:none}}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;font-size:13px;width:100%;min-width:620px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}
+th{font-weight:500;color:var(--ink3);font-size:12px}
+td:first-child{color:var(--ink3);white-space:nowrap}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+@media (max-width:700px){.two{grid-template-columns:1fr}}
+.side{display:flex;flex-direction:column;gap:10px;min-width:0}
+.side h3{display:flex;align-items:center;gap:8px}
+.side h3 i{display:inline-block;width:10px;height:10px;border-radius:2px}
+ul{margin:0;padding-left:18px;color:var(--ink2);display:flex;flex-direction:column;gap:7px;max-width:68ch}
+li b{color:var(--ink);font-weight:600}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.note{font-size:13px;color:var(--ink3)}
+</style>
+<div class="wrap">
+  <div class="lede">
+    <div class="eyebrow">Architecture comparison · read from the public Facet-0 code and our repository</div>
+    <h1>Facet-0 and our force policy, side by side</h1>
+    <p>Facet-0 (PINE Lab, NTU) is a foundation model for contact-rich manipulation built on a large vision-language-action model. Ours is a small policy trained from scratch on 4.3 hours of SharpaDex. Both read force, predict force next to the action, and generate actions in chunks.</p>
+    <div class="verdict"><p><b>The two models agree on what to do with force and differ in scale and in how they learn after imitation.</b> Facet-0's lead is its language-capable backbone and its reinforcement-learning stages. Ours has richer force sensing, measured ablations, and a size that trains in minutes. The one Facet-0 piece we have tested so far, the wrench encoder, did not help on our data.</p></div>
+  </div>
+
+  <section>
+    <h2>The two models, layer by layer</h2>
+    <div class="stacks">
+      <div class="sp"></div><div class="hd a">Facet-0</div><div class="hd b">Ours</div>
+
+      <div class="row">Sees</div>
+      <div class="cell a"><b>3 cameras, a text instruction</b><span>Images and text go through PaliGemma: a SigLIP So400m image encoder and a Gemma language model, both trained.</span></div>
+      <div class="cell b"><b>3 cameras, a task token</b><span>Images go through a frozen DINOv2-small encoder, cached once. The task is one learned token, not text.</span></div>
+
+      <div class="row">Feels</div>
+      <div class="cell a"><b>One wrist wrench</b><span>6 numbers (force and torque), last 10 frames, as one wrench token. Arm pose and gripper as one state token.</span><small>10 × 6 wrench · 7-D state</small></div>
+      <div class="cell b"><b>Ten fingertips and every joint</b><span>Force and torque at 10 fingertips, torque at 58 joints, joint positions; 6 history frames each as tokens.</span><small>60-D tactile · 58-D torque · 58-D state</small></div>
+
+      <div class="row">Thinks</div>
+      <div class="cell a"><b>Language model, then an action expert</b><span>The action expert is a second, smaller Gemma that attends to the language model's output and to the state and wrench tokens.</span><small>about 3 billion parameters (pi0.5 lineage)</small></div>
+      <div class="cell b"><b>Small encoder, then query slots</b><span>A 4-layer encoder over all tokens; a 3-layer decoder with 16 action slots and 3 decision slots (contact soon, phase, force level).</span><small>6.9 million trained parameters</small></div>
+
+      <div class="row">Acts</div>
+      <div class="cell a"><b>Flow matching, 50 steps ahead</b><span>Generates a joint chunk of Cartesian arm motion, gripper and next wrench from noise. Only the action is executed.</span><small>50 × (7 action + 6 wrench)</small></div>
+      <div class="cell b"><b>Flow matching, 16 steps ahead</b><span>Same idea, converted this week from direct regression. The velocity passes through two gated experts; the decision slots set the gate.</span><small>16 × (58 joint targets + 30 fingertip forces)</small></div>
+
+      <div class="row">Learns</div>
+      <div class="cell a"><b>Three stages</b><span>1. Imitation, alternating with visual question answering. 2. Offline RL: a judge scores rollouts, a value model picks the best 20% of moments, the policy is steered towards them. 3. On-robot actor-critic corrections.</span></div>
+      <div class="cell b"><b>One stage so far</b><span>Imitation with a force loss and decision labels. Stage 2 is being built with a Qwen2.5-VL judge; stage 3 would run inside a video world model, not on a robot.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Line by line</h2>
+    <div class="tw"><table>
+      <tr><th></th><th>Facet-0</th><th>Ours</th></tr>
+      <tr><td>Robot</td><td>One arm with a gripper and a wrist force-torque sensor</td><td>Two arms, two 22-joint hands, ten tactile fingertips</td></tr>
+      <tr><td>Action</td><td>End-effector motion in Cartesian space (6 deltas + gripper)</td><td>58 joint position targets, relative to the current joints</td></tr>
+      <tr><td>Chunk</td><td>50 steps</td><td>16 steps (0.53 s at 30 Hz)</td></tr>
+      <tr><td>Force in</td><td>Wrist wrench history only</td><td>Fingertip wrench history and joint torque history</td></tr>
+      <tr><td>Force out</td><td>Next-step wrench, causal 5-frame average, weight 0.1</td><td>Fingertip force as change from now, weight 0.1 in the flow loss</td></tr>
+      <tr><td>Loss</td><td>Squared velocity error (flow matching), noise level from Beta(1.5, 1)</td><td>The same, plus cross-entropy on the three decision slots</td></tr>
+      <tr><td>Language</td><td>Free text, and a trained ability to answer questions about images</td><td>None: one token per task</td></tr>
+      <tr><td>Training budget</td><td>40,000 steps, batch 32, on a pretrained multi-billion-parameter model</td><td>25,000 steps, batch 256, from scratch, about 25 minutes on one GPU</td></tr>
+      <tr><td>After imitation</td><td>Distributional value model (201 return bins), 20-step advantage, guidance at run time; then bounded on-robot learning</td><td>In progress</td></tr>
+      <tr><td>Evidence</td><td>Real-robot task success (paper); code ships without weights for the judge</td><td>Offline error on 115 held-out episodes, 3 seeds, intervals over episodes and seeds</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Where each one is ahead</h2>
+    <div class="two">
+      <div class="side">
+        <h3><i style="background:var(--a)"></i>Facet-0's advantages</h3>
+        <ul>
+          <li><b>It understands instructions.</b> Our model ignores its task token: swapping it for another task's changes error by only <span class="num">0.1 to 0.5 mrad</span>. A pretrained language model is the direct fix.</li>
+          <li><b>It can get better than its demonstrations.</b> Stages 2 and 3 use reward. Ours can only copy the operator, so its ceiling is the operator.</li>
+          <li><b>It starts from broad pretraining.</b> New objects and scenes cost it far less data. Our error still falls <span class="num">6.5%</span> per doubling of data with no sign of flattening.</li>
+          <li><b>Cartesian actions transfer between robots.</b> Joint targets are tied to this robot.</li>
+          <li><b>Longer plans.</b> 50 steps against our 16, with a schedule that switches to fine corrections when contact starts.</li>
+        </ul>
+      </div>
+      <div class="side">
+        <h3><i style="background:var(--b)"></i>Our advantages</h3>
+        <ul>
+          <li><b>Richer force sensing.</b> One wrist sensor cannot tell which finger is touching. Ten fingertips can, and joint torque is our most useful force signal: removing it costs <span class="num">0.73 mrad</span> in contact.</li>
+          <li><b>Every use of force is measured.</b> Each can be switched off in the config and was ablated with three seeds. Facet-0's public code has no such breakdown.</li>
+          <li><b>Small and fast.</b> About 400 times fewer trained parameters. A full comparison with seeds reruns in under an hour, and the model could run on the robot's own computer.</li>
+          <li><b>Readable decisions.</b> The contact-soon slot is right <span class="num">97.5%</span> of the time 0.33 s ahead and could gate a controller.</li>
+          <li><b>Dexterous hands.</b> 44 finger joints are in the action. Facet-0 controls a gripper.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Where each one is behind</h2>
+    <div class="two">
+      <div class="side">
+        <h3><i style="background:var(--a)"></i>Facet-0's disadvantages</h3>
+        <ul>
+          <li><b>Heavy.</b> Training needs a multi-GPU setup and the pi0.5 base weights; inference needs a server next to the robot.</li>
+          <li><b>Thin force sensing.</b> A wrist wrench mixes every contact on the hand into six numbers. It would not scale to a tactile hand without redesigning the wrench token.</li>
+          <li><b>Stage 2 depends on a judge that is not released.</b> The reward comes from a vision-language model's opinion of subgoal completion, so judge errors become policy errors.</li>
+          <li><b>Stage 3 needs a robot and a person.</b> It learns from human interventions on hardware.</li>
+        </ul>
+      </div>
+      <div class="side">
+        <h3><i style="background:var(--b)"></i>Our disadvantages</h3>
+        <ul>
+          <li><b>No language.</b> A new task means a new token and new data.</li>
+          <li><b>Frozen, small vision.</b> DINOv2-small features cannot adapt to tactile-relevant detail such as where a fingertip meets a rim.</li>
+          <li><b>Imitation only, tested offline only.</b> Nothing yet shows the model completing a task. Error against the operator is a proxy.</li>
+          <li><b>Under-trained at 8,000 steps.</b> Tripling the steps helped more (<span class="num">−2.2 mrad</span> in free motion) than force did.</li>
+          <li><b>Three tasks, one robot.</b> Nothing here has been shown to transfer.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What we have taken from Facet-0 so far</h2>
+    <div class="tw"><table>
+      <tr><th>Piece</th><th>How we used it</th><th>Result</th></tr>
+      <tr><td>Wrench encoder</td><td>One wrench token per fingertip and a state token, read by a third expert with Facet-0's joint action-wrench loss</td><td>Error fell <span class="num">0.39 mrad</span>, but the same expert without the wrench tokens does equally well (<span class="num">+0.03 [−0.08, +0.16]</span>). The gain is the extra expert, not the wrench history.</td></tr>
+      <tr><td>Flow matching</td><td>The whole action head, with Facet-0's noise schedule and force weight</td><td>Training now: 25,000 steps, three seeds, with and without force</td></tr>
+      <tr><td>Stage 2 (offline RL)</td><td>Qwen2.5-VL as the judge, then the value model, advantage labels and guidance</td><td>Judge being tested against the dataset's own subtask labels</td></tr>
+      <tr><td>Stage 3 (online)</td><td>A video world model in place of the robot</td><td>Depends on whether the world model's video is good enough; not started</td></tr>
+    </table></div>
+    <p class="note">Facet-0 facts are from the code at github.com/PINE-Lab-NTU/FACET (model.py, losses.py, refinement/, configs/pretrain.json). Its parameter count is my estimate from the PaliGemma base it builds on; the repository does not state it. Our numbers are from three tasks, 115 held-out episodes, three seeds.</p>
+  </section>
+</div>

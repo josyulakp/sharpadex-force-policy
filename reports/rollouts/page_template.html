@@ -1,0 +1,194 @@
+<title>Eraser Rollouts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* layout: one column, a lab-notebook strip chart: video on top, stacked traces sharing one time axis below */
+:root{
+  --bg:#f7f8f8; --surface:#fcfcfb; --ink:#0f1413; --ink2:#4c5553; --ink3:#7b8482; --rule:#dfe3e2; --band:#e9eeec;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --p1:#6250d6; --p2:#eda100; --p3:#1baf7a; --p0:#c4cac8;
+  --sans:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121514; --surface:#1a1d1c; --ink:#eef1f0; --ink2:#bcc4c1; --ink3:#8a9390; --rule:#2e3432; --band:#252b29;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --p1:#9085e9; --p2:#c98500; --p3:#199e70; --p0:#4a524f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121514; --surface:#1a1d1c; --ink:#eef1f0; --ink2:#bcc4c1; --ink3:#8a9390; --rule:#2e3432; --band:#252b29;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --p1:#9085e9; --p2:#c98500; --p3:#199e70; --p0:#4a524f; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+h1{font-size:28px;font-weight:600;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:18px;font-weight:600;margin:0;text-wrap:balance}
+p{margin:0;max-width:68ch;color:var(--ink2)}
+.lede{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tabs button{font:500 13px var(--sans);padding:7px 12px;border:1px solid var(--rule);background:var(--surface);color:var(--ink2);border-radius:4px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tabs button:focus-visible,select:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.player{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:14px;min-width:0}
+video{width:100%;aspect-ratio:3/1;background:#000;border-radius:3px;display:block}
+.camlabels{display:grid;grid-template-columns:repeat(3,1fr);font-family:var(--mono);font-size:11px;color:var(--ink3);text-align:center;margin-top:-8px}
+.stats{display:flex;flex-wrap:wrap;gap:8px 28px}
+.stat{display:flex;flex-direction:column}
+.stat b{font:500 20px var(--mono);font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--ink3)}
+.uid{font-family:var(--mono);font-size:11px;color:var(--ink3);overflow-wrap:anywhere}
+.chart{display:flex;flex-direction:column;gap:4px;min-width:0;position:relative}
+.chead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.chead h3{font-size:13px;font-weight:600;margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--ink2)}
+.legend i{display:inline-block;width:14px;height:0;border-top:2px solid;vertical-align:middle;margin-right:5px}
+.legend i.sq{height:9px;border:0;width:9px;border-radius:2px}
+select{font:13px var(--sans);padding:3px 6px;background:var(--surface);color:var(--ink);border:1px solid var(--rule);border-radius:4px}
+svg{display:block;width:100%;cursor:crosshair;touch-action:pan-y}
+svg text{font:11px var(--mono);fill:var(--ink3)}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font:11px var(--mono);padding:5px 7px;border-radius:3px;white-space:nowrap;z-index:2}
+.note{font-size:13px;color:var(--ink3)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;font-size:13px;width:100%;min-width:560px}
+th,td{padding:6px 10px;border-bottom:1px solid var(--rule);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:500;color:var(--ink3);font-size:12px}
+td{font-family:var(--mono);font-size:12px} td:first-child{font-family:var(--sans);font-size:13px}
+td small{color:var(--ink3)}
+section{display:flex;flex-direction:column;gap:12px;min-width:0}
+ul{margin:0;padding-left:18px;color:var(--ink2);max-width:68ch;display:flex;flex-direction:column;gap:6px}
+</style>
+<div class="wrap">
+  <div class="lede">
+    <div class="eyebrow">SharpaDex · clean_plate_with_eraser · offline replay</div>
+    <h1>What the model commands, next to what the operator commanded</h1>
+    <p>Four recorded episodes: one from training as a reference, and the held-out episodes where the model with force did best, typical and worst. Nothing runs on a robot. Every <span id="exec"></span> frames the model reads the recorded cameras, joints and forces, predicts the next joint targets, and that prediction is followed until the next one.</p>
+  </div>
+
+  <section>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="player">
+      <video id="vid" controls muted playsinline preload="metadata"></video>
+      <div class="camlabels"><span>head</span><span>left wrist</span><span>right wrist</span></div>
+      <div class="stats" id="stats"></div>
+      <div class="uid" id="uid"></div>
+      <div id="charts" style="display:flex;flex-direction:column;gap:18px"></div>
+      <div class="note">Shaded spans are frames in contact (any fingertip above 1 N). Hover a trace for values; click to move the video there.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Held-out results behind these rollouts</h2>
+    <p>34 held-out episodes, 3 training seeds per variant. Error is the mean absolute difference between predicted and commanded joint targets over a 16-step prediction, in milliradians. Brackets are 95% intervals over episodes and seeds.</p>
+    <div class="tw"><table id="t_main"></table></div>
+    <ul id="notes_main"></ul>
+  </section>
+
+  <section>
+    <h2>Force inputs set to zero at test time</h2>
+    <p>Same checkpoints, but fingertip force and joint torque are replaced by zeros before they reach the model. A model that ignores force would not change.</p>
+    <div class="tw"><table id="t_zero"></table></div>
+    <ul id="notes_zero"></ul>
+  </section>
+</div>
+<script>
+const D = /*ROLLOUTS*/null, R = /*RESULTS*/null, Z = /*ZERO*/null;
+const $ = s => document.querySelector(s), NS = "http://www.w3.org/2000/svg";
+const el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); p && p.appendChild(e); return e; };
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+$("#exec").textContent = D.execute_steps;
+const LAB = {full: "with force", no_force: "without force", full_residual_force: "predicted, change-from-now head", recorded: "operator command", measured: "measured"};
+const COL = {full: "--s1", no_force: "--s2", full_residual_force: "--s3", recorded: "--ink", measured: "--ink"};
+let ep, charts = [], joint = 0;
+const vid = $("#vid");
+
+function runs(a) { const r = []; let s = 0; for (let i = 1; i <= a.length; i++) if (i === a.length || a[i] !== a[s]) { r.push([s, i, a[s]]); s = i; } return r; }
+function ticks(lo, hi, n = 4) { const st = Math.pow(10, Math.floor(Math.log10((hi - lo) / n))); const m = [1, 2, 5, 10].find(m => (hi - lo) / (st * m) <= n) * st; const t = []; for (let v = Math.ceil(lo / m) * m; v <= hi + 1e-9; v += m) t.push(+v.toFixed(6)); return t; }
+
+function makeChart(host, o) {
+  const box = document.createElement("div"); box.className = "chart"; host.appendChild(box);
+  const head = document.createElement("div"); head.className = "chead"; box.appendChild(head);
+  const h3 = document.createElement("h3"); h3.textContent = o.title; head.appendChild(h3);
+  if (o.control) head.appendChild(o.control);
+  const lg = document.createElement("div"); lg.className = "legend"; head.appendChild(lg);
+  (o.legend || o.series.map(s => ({name: s.name, color: s.color}))).forEach(s => { const sp = document.createElement("span"); sp.innerHTML = `<i class="${s.sq ? "sq" : ""}" style="${s.sq ? "background" : "border-color"}:var(${s.color})"></i>`; sp.append(s.name); lg.appendChild(sp); });
+  const svg = el("svg"); box.appendChild(svg);
+  const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; box.appendChild(tip);
+  const c = {o, svg, tip, box};
+  c.draw = () => {
+    const W = Math.max(280, box.clientWidth), H = o.height || 130, ml = 46, mr = 10, mt = 6, mb = 20, T = ep.frames;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H); svg.innerHTML = "";
+    const x = i => ml + i / (T - 1) * (W - ml - mr);
+    c.x = x; c.inv = px => Math.max(0, Math.min(T - 1, Math.round((px - ml) / (W - ml - mr) * (T - 1))));
+    runs(ep.contact).forEach(([a, b, v]) => v && el("rect", {x: x(a), y: mt, width: Math.max(1, x(b - 1) - x(a)), height: H - mt - mb, fill: css("--band")}, svg));
+    const dur = T / ep.fps;
+    ticks(0, dur, W < 500 ? 4 : 8).forEach(s => { el("text", {x: x(s * ep.fps), y: H - 5, "text-anchor": "middle"}, svg).textContent = s + " s"; });
+    if (o.strips) {
+      const rows = o.strips, rh = (H - mt - mb - 4 * (rows.length - 1)) / rows.length;
+      rows.forEach((r, k) => { const y = mt + k * (rh + 4);
+        el("text", {x: ml - 6, y: y + rh / 2 + 4, "text-anchor": "end"}, svg).textContent = r.name;
+        runs(r.data).forEach(([a, b, v]) => { el("rect", {x: x(a), y, width: Math.max(1, x(b - 1) - x(a) - 1), height: rh, rx: 2, fill: css(o.colors[v])}, svg); }); });
+    } else {
+      let lo = Infinity, hi = -Infinity; o.series.forEach(s => s.data.forEach(v => { if (v < lo) lo = v; if (v > hi) hi = v; }));
+      if (o.zero) lo = 0; if (o.max) hi = o.max; if (hi - lo < 1e-6) hi = lo + 1; const pad = (hi - lo) * .06; if (!o.zero) lo -= pad; if (!o.max) hi += pad;
+      const y = v => mt + (hi - v) / (hi - lo) * (H - mt - mb);
+      ticks(lo, hi).forEach(v => { el("line", {x1: ml, x2: W - mr, y1: y(v), y2: y(v), stroke: css("--rule"), "stroke-width": 1}, svg); el("text", {x: ml - 6, y: y(v) + 4, "text-anchor": "end"}, svg).textContent = v; });
+      if (o.hline != null) el("line", {x1: ml, x2: W - mr, y1: y(o.hline), y2: y(o.hline), stroke: css("--ink3"), "stroke-dasharray": "3 3"}, svg);
+      o.series.forEach(s => el("path", {d: s.data.map((v, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1)).join(""), fill: "none", stroke: css(s.color), "stroke-width": s.w || 2, "stroke-linejoin": "round"}, svg));
+    }
+    c.cur = el("line", {y1: mt, y2: H - mb, stroke: css("--ink"), "stroke-width": 1.5}, svg);
+    c.hov = el("line", {y1: mt, y2: H - mb, stroke: css("--ink3"), "stroke-width": 1, "stroke-dasharray": "2 2", visibility: "hidden"}, svg);
+    setCursor();
+  };
+  const at = e => c.inv((e.clientX - svg.getBoundingClientRect().left));
+  svg.addEventListener("pointermove", e => { const i = at(e);
+    charts.forEach(k => { k.hov.setAttribute("x1", k.x(i)); k.hov.setAttribute("x2", k.x(i)); k.hov.setAttribute("visibility", "visible"); });
+    const rows = o.strips ? o.strips.map(r => `${r.name}: ${o.names[r.data[i]]}`) : o.series.map(s => `${s.name}: ${s.data[i].toFixed(o.digits == null ? 1 : o.digits)} ${o.unit}`);
+    tip.innerHTML = `${(i / ep.fps).toFixed(2)} s · ${ep.contact[i] ? "contact" : "free"}<br>` + rows.join("<br>"); tip.hidden = false;
+    const bx = box.getBoundingClientRect(), px = e.clientX - bx.left; tip.style.top = (svg.getBoundingClientRect().top - bx.top + 4) + "px";
+    tip.style.left = Math.min(bx.width - tip.offsetWidth - 2, Math.max(0, px + (px > bx.width / 2 ? -tip.offsetWidth - 10 : 10))) + "px"; });
+  svg.addEventListener("pointerleave", () => { tip.hidden = true; charts.forEach(k => k.hov.setAttribute("visibility", "hidden")); });
+  svg.addEventListener("click", e => { vid.currentTime = at(e) / ep.fps; setCursor(); });
+  charts.push(c); return c;
+}
+function setCursor() { if (!ep) return; const i = Math.min(ep.frames - 1, vid.currentTime * ep.fps || 0); charts.forEach(c => { if (c.cur) { c.cur.setAttribute("x1", c.x(i)); c.cur.setAttribute("x2", c.x(i)); } }); }
+(function loop() { setCursor(); requestAnimationFrame(loop); })();
+
+const f1 = v => v == null ? "–" : v.toFixed(1);
+function show(k) {
+  ep = D.episodes[k]; joint = 0;
+  [...$("#tabs").children].forEach((b, i) => b.setAttribute("aria-selected", i === k));
+  vid.src = ep.video; vid.load();
+  const s = ep.summary;
+  $("#stats").innerHTML = [["with force", s.full], ["without force", s.no_force]].map(([n, v]) => `<div class="stat"><b>${f1(v.all)} mrad</b><span>${n} · contact ${f1(v.contact)} · free ${f1(v.free)}</span></div>`).join("") +
+    `<div class="stat"><b>${f1(ep.hold_err)} mrad</b><span>if the pose were simply held between predictions</span></div>` +
+    `<div class="stat"><b>${ep.force_err.full_residual_force.toFixed(2)} N</b><span>force error per fingertip axis (change-from-now head; plain head ${ep.force_err.full.toFixed(2)} N)</span></div>`;
+  $("#uid").textContent = `${ep.uid} · ${ep.frames} frames · ${(ep.frames / ep.fps).toFixed(1)} s · seed ${D.seed}`;
+  const host = $("#charts"); host.innerHTML = ""; charts = [];
+  makeChart(host, {title: "Action error, all joints (mrad)", unit: "mrad", zero: true, series: ["full", "no_force"].map(v => ({name: LAB[v], color: COL[v], data: ep.err[v]}))});
+  const sel = document.createElement("select"); sel.id = "joint"; sel.setAttribute("aria-label", "Joint"); ep.joints.forEach((j, i) => sel.add(new Option(j.name, i)));
+  const jc = makeChart(host, {title: "Joint target (deg)", unit: "°", control: sel, height: 170, series: []});
+  const setJ = () => { const j = ep.joints[sel.value]; jc.o.series = [{name: LAB.recorded, color: COL.recorded, data: j.recorded, w: 1.5}, {name: LAB.full, color: COL.full, data: j.full}, {name: LAB.no_force, color: COL.no_force, data: j.no_force}]; jc.draw(); };
+  jc.o.legend = ["recorded", "full", "no_force"].map(v => ({name: LAB[v], color: COL[v]})); jc.box.querySelector(".legend").innerHTML = jc.o.legend.map(s => `<span><i style="border-color:var(${s.color})"></i>${s.name}</span>`).join("");
+  sel.onchange = setJ;
+  makeChart(host, {title: "Largest fingertip force (N)", unit: "N", digits: 2, zero: true, hline: D.contact_threshold_n, series: [{name: LAB.measured, color: COL.measured, data: ep.force.measured, w: 1.5}, {name: "predicted, plain head", color: "--s1", data: ep.force.full}, {name: LAB.full_residual_force, color: "--s3", data: ep.force.full_residual_force}]});
+  makeChart(host, {title: "Decision slot: contact within 0.33 s (probability)", unit: "", digits: 2, zero: true, max: 1, height: 90, series: [{name: "predicted probability", color: "--s1", data: ep.contact_prob}]});
+  const pc = ["--p0", "--p1", "--p2", "--p3"], names = ep.phases, none = names.indexOf("none"), order = names.map((n, i) => i === none ? 0 : 0), colors = {}; let q = 1; names.forEach((n, i) => colors[i] = i === none ? pc[0] : pc[q++]);
+  makeChart(host, {title: "Decision slot: task phase", height: 74, strips: [{name: "label", data: ep.phase_label}, {name: "model", data: ep.phase_pred}], names, colors, noneIdx: none, legend: names.map((n, i) => ({name: n, color: colors[i], sq: true}))});
+  charts.forEach(c => c !== jc && c.draw()); setJ();
+}
+D.episodes.forEach((e, k) => { const b = document.createElement("button"); b.role = "tab"; b.id = "tab" + k; b.textContent = e.label[0].toUpperCase() + e.label.slice(1); b.onclick = () => show(k); $("#tabs").appendChild(b); });
+show(1);
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => charts.forEach(c => c.draw()), 120); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => charts.forEach(c => c.draw()));
+new MutationObserver(() => charts.forEach(c => c.draw())).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+
+const VN = {full: "All force on", no_force: "No force anywhere", no_torque_input: "No joint torque input", no_tactile_input: "No fingertip force input", torque_arms_only: "Torque from arms only", torque_hands_only: "Torque from hands only", no_force_output: "No force prediction", no_decision_supervision: "No force-based decision labels", full_residual_force: "Force head predicts change from now"};
+function table(id, res, ref, cols) {
+  const a = res.act, cell = r => `${(r.mean * 1e3).toFixed(1)} <small>[${(r.lo * 1e3).toFixed(1)}, ${(r.hi * 1e3).toFixed(1)}]</small>`;
+  const d = r => r.diff == null ? "–" : `${r.diff > 0 ? "+" : ""}${(r.diff * 1e3).toFixed(1)} <small>[${(r.diff_lo * 1e3).toFixed(1)}, ${(r.diff_hi * 1e3).toFixed(1)}]</small>`;
+  $(id).innerHTML = `<tr><th>Variant</th><th>Contact</th><th>Free motion</th>${cols.map(c => `<th>${c[0]}</th>`).join("")}</tr>` +
+    Object.keys(VN).filter(v => a[v]).map(v => `<tr><td>${VN[v]}</td><td>${cell(a[v].contact)}</td><td>${cell(a[v].free)}</td>${cols.map(c => `<td>${c[1](v, a[v], d)}</td>`).join("")}</tr>`).join("");
+}
+table("#t_main", R, "full", [["Difference to all force on, contact", (v, r, d) => d(r.contact)], ["free motion", (v, r, d) => d(r.free)]]);
+const chg = g => (v, r) => { const b = R.act[v][g].mean, x = (r[g].mean - b) * 1e3; return `${x > 0.05 ? "+" : ""}${x.toFixed(1)}`; };
+table("#t_zero", Z, "full", [["Change from normal inputs, contact", chg("contact")], ["free motion", chg("free")]]);
+$("#notes_main").innerHTML = `<li>With force, error in contact is 2.0 mrad lower (about 10%) and the interval excludes zero. In free motion the difference is 0.4 mrad and the interval touches zero.</li><li>Joint torque carries most of it: taking torque away alone costs 1.7 mrad in contact, taking fingertip force away alone costs 0.4.</li><li>Each body part uses its own torque. With arm torque only, arm error in contact is unchanged (16.2 vs 16.3 mrad) and hand error rises by 0.9. With hand torque only, hand error rises by just 0.3 and arm error by 1.4.</li><li>The torque gain is mostly in contact frames (0.3 to 0.7 mrad in free motion), which argues against torque simply leaking the operator command, but does not rule it out.</li><li>Predicting force and training the decision slots on force labels do not change action error measurably.</li><li>The replay above follows only the first 8 steps of each prediction, so its errors are lower than the 16-step errors in this table.</li>`;
+$("#notes_zero").innerHTML = `<li>The model with all force on gets much worse when force is zeroed: 20.1 to 33.2 mrad in contact and 17.1 to 28.0 in free motion. It is still better than holding the current pose (48.0 and 53.7).</li><li>The free-motion damage comes from torque. Zero torque never occurs in the data because the arms always carry their own weight, so the model sees an input it was never trained on. The variant without torque input barely moves in free motion.</li><li>Fingertip force is used in contact: the variant that reads only fingertip force goes from 21.7 to 28.8 mrad in contact when it is zeroed.</li><li>The model trained without force does not change, as it should.</li>`;
+</script>

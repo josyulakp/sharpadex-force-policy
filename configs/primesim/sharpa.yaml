@@ -1,0 +1,66 @@
+# @package _global_
+# SharpaDex (clean_plate_with_eraser) for PrimeSim: head + two wrist cameras, 75-D actions (scripts/ps_prepare.py).
+# Copied to <primesim src>/config/dataset/ by scripts/ps_train.py; DATA_ROOT and REPO_IDS are filled in there.
+
+train_pipeline: &pipeline
+  - type: RefactorLerobot
+    key_mapper:
+      observation.images.head: img_1
+      observation.images.wrist_left: img_2
+      observation.images.wrist_right: img_3
+      observation.state: state_vec
+      action: action_vec
+  - type: AlignFormatLerobot
+    key_mapper: {img_1: img_1, img_2: img_2, img_3: img_3}
+  - type: SharpaStateAction
+    state_len: ${num_frames}
+    action_len: ${action_len}
+  - type: GetTextLerobot
+    default_text: Complete the bimanual manipulation task.
+  - type: TransformPrompt
+    default_prompt: Complete the bimanual manipulation task.
+    key_mapper:
+      - text: prompt
+  - type: ResizeImages
+    height: ${img_height}
+    width: ${img_width}
+    key_mapper: {img_1: img_1, img_2: img_2, img_3: img_3}
+  - type: ImgNormalize
+    key_mapper: {img_1: img_1, img_2: img_2, img_3: img_3}
+  - type: ConcatenateMultiview
+    key_mapper:
+      - ("img_1", "img_2", "img_3"): videos
+  - type: Gather
+    keys: [videos, state, action, action_mask, prompt]
+
+valid_pipeline: *pipeline
+
+dataset:
+  type: OpenLeRobotMixedDatasetV3
+  root: DATA_ROOT
+  train_pipeline: ${..train_pipeline}
+  valid_pipeline: ${..valid_pipeline}
+  action_sources: [action]
+  tolerances_s: 0.02             # under one 30 Hz frame
+  fps: ${fps}
+  repo_ids: REPO_IDS
+
+train_ratio: 0.99
+valid_ratio: 0.01
+
+datasets:
+  data_loader:
+    type: XEmbDataModule            # the released configs still use the old name MidtrainLeRobotDataModuleV3
+    dataset_list:
+      - ${dataset}
+    batch_size: ${batch_size}
+    num_workers: 8
+    num_frames: ${num_frames}
+    fps: ${fps}
+    action_dim: ${action_dim}
+    prefetch_factor: 2
+    train_ratio: ${train_ratio}
+    valid_ratio: ${valid_ratio}
+    stride: 10                    # one random window start per 10 frames per epoch
+    seed: ${seed}
+    decoder_cache_limit: 32
