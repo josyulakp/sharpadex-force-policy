@@ -2,6 +2,7 @@
 
     python scripts/rl_critic.py      -> <rl.out_dir>/credit.npz (per frame: value, credit, label, intensity, regime)
                                         <rl.out_dir>/credit.json (held-out check of the critic, thresholds, label rates)
+                                        <rl.out_dir>/critic_log.json (training loss and held-out check against steps)
 
 Critic: categorical value distribution (C51 projection, target network) of h_t = [mean encoder token, decision slots]
 of the frozen stage-1 flow policy; trained on training episodes only. Credit: reward over the next 20 frames + value
@@ -75,6 +76,7 @@ if __name__ == "__main__":
     opt = torch.optim.AdamW(net.parameters(), lr=K["lr"])
     r, last = cols["train"]["reward"].float(), cols["train"]["last"].float()
     value = lambda x: (F.softmax(net((x - mu) / sd), -1) * atoms).sum(-1)  # noqa: E731
+    curve, recent = [], []
     for step in range(K["steps"]):
         i = torch.randint(len(h), (K["batch_size"],), device="cuda")
         nxt = (i + 1).clamp(max=len(h) - 1)                               # ignored where the episode ends (done = 1)
@@ -84,6 +86,7 @@ if __name__ == "__main__":
         opt.zero_grad(set_to_none=True)
         loss.backward()
         opt.step()
+        recent.append(loss.item())
         with torch.no_grad():
             for a, b in zip(target.parameters(), net.parameters()):
                 a.lerp_(b, K["target_ema"])
@@ -91,6 +94,10 @@ if __name__ == "__main__":
             with torch.no_grad():
                 v = value(feats["heldout"])
                 g = cols["heldout"]["ret"]
+            curve.append({"step": step, "loss": float(np.mean(recent)), "heldout_abs_error": float((v - g).abs().mean()),
+                          "heldout_abs_error_constant": float((g - cols["train"]["ret"].mean()).abs().mean()),
+                          "heldout_correlation": float(torch.corrcoef(torch.stack([v, g]))[0, 1])})
+            recent = []
             print(f"step {step:5d} loss {loss.item():.4f}  held-out: |value - return| {(v - g).abs().mean():.3f} "
                   f"(constant {(g - cols['train']['ret'].mean()).abs().mean():.3f}), correlation {torch.corrcoef(torch.stack([v, g]))[0, 1]:.3f}", flush=True)
 
@@ -126,4 +133,5 @@ if __name__ == "__main__":
                         **{k: np.concatenate(v) for k, v in rows.items()})
     check["thresholds"] = thresholds
     (out / "credit.json").write_text(json.dumps(check, indent=1))
+    (out / "critic_log.json").write_text(json.dumps(curve))
     print(json.dumps(check, indent=1))

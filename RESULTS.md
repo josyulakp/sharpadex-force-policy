@@ -9,14 +9,19 @@ held-out episodes that are never trained on.
 13.95 mrad; the same model without force reaches 14.91 mrad.** Every other path tried in this project ended above it.
 The second-best approach, the two-expert model at the same budget, reaches 14.34 mrad.
 
+Task success was measured in one place only, a physics simulation of `clean_plate_with_eraser`: there, corrections
+learned from reward around the frozen model raise success on scenes never trained in from 29 % to 63 % (58 % in a second
+training run; section 7).
+
 Checkpoints: [huggingface.co/josyula/sharpadex-force-policy](https://huggingface.co/josyula/sharpadex-force-policy).
 
-All numbers below are mean absolute errors on the held-out episodes, mean of 3 training seeds. Intervals are 95 %
+All numbers of sections 1 to 6 are mean absolute errors on the held-out episodes, mean of 3 training seeds. Intervals are 95 %
 bootstrap intervals over held-out episodes and seeds. "In contact" means any fingertip force above 1 N.
 
 Contents: [the result](#1-the-result) · [the model](#2-the-model) · [the paths taken](#3-the-paths-taken) ·
 [ablation of the released model](#4-ablation-of-the-released-model) · [data need](#5-data-need) ·
-[world models](#6-world-models) · [limits](#7-limits) · [reproduce](#8-reproduce)
+[world models](#6-world-models) · [stage 3 in simulation](#7-stage-3-corrections-learned-in-a-physics-simulation) ·
+[limits](#8-limits) · [reproduce](#9-reproduce)
 
 ## 1. The result
 
@@ -304,13 +309,154 @@ tactile latents from the last 8, the joints and the commands. The tactile expert
 - **Cosmos-Predict2 (2 B weights), head camera only:** after 2,000 fine-tuning steps its replay of one episode was at
   31.7 grey levels, against 11.4 for PrimeSim on its test windows. The two numbers are from different episodes, so they
   are an indication and not a comparison. Dropped for PrimeSim.
-- **Physics simulation (MuJoCo) replay of recorded commands:** built for the eraser task (`sim/`), used for replay only.
-  No policy was evaluated in it.
+- **Physics simulation (MuJoCo) with the public arm model:** it does not reproduce the recorded hand poses from
+  the recorded arm joints (3 to 5 cm off), so the simulation of section 7 moves the two hands without arms.
 
-## 7. Limits
+## 7. Stage 3: corrections learned in a physics simulation
+
+Sections 1 to 6 measure the distance to the operator's command on recorded frames. This section asks what they cannot:
+is the task done, and can the model be improved from the outcome alone? The released model is frozen and a small network
+learns bounded corrections to its commands from reward, in a MuJoCo simulation of `clean_plate_with_eraser`. The method
+is the third stage of Facet-0 (online adaptation around a frozen policy), with the robot replaced by the simulator.
+
+**On 29 scenes the corrections were never trained in, each run under 20 perturbations, task success rises from 29 % with
+the frozen model to 63 % with the corrections: +34 points, 95 % interval +25 to +42.** 24 of the 29 scenes improve,
+2 are unchanged and 3 get worse. A second training run with another seed reaches 58 % (+29 points, [+20, +37]).
+
+![Stage 3: learning curve and held-out result](reports/figures/stage3_curve.png)
+
+Left: success during training in episodes without exploration noise, in the scenes the corrections train in and in the
+32 validation scenes they never train in. Right: the evaluation on the held-out scenes. The matched control is section 7.2.
+
+| 29 held-out scenes × 20 perturbations | Operator's commands | Frozen model | With corrections | Corrections minus frozen (paired) |
+|---|---|---|---|---|
+| Task success | 35.9 % [26.9, 45.5] | 29.3 % [21.4, 38.1] | **62.9 %** [54.3, 71.2] | **+33.6 points** [+25.0, +42.4] |
+| Plate picked up | 87.8 % | 85.5 % | 94.7 % | +9.1 points [+4.3, +14.7] |
+| Plate dropped off the table | 15.3 % | 15.0 % | 8.4 % | −6.6 points [−11.2, −1.6] |
+| Eraser travel on the held plate | 9.1 cm | 8.6 cm | 15.4 cm | +6.8 cm [+5.0, +8.6] |
+
+The table and sections 7.2 to 7.4 are the first training run. Intervals are 95 % bootstrap intervals over scenes; the
+difference is paired by scene and perturbation. Without perturbation (one run per scene) success is 31 % for the frozen
+model and 72 % with the corrections (+41 points, [+21, +62]). Full tables of both runs and the control:
+`reports/results/stage3.md`. All 29 held-out scenes, frozen model and corrected model side by side: `reports/stage3/videos/`
+and the [stage 3 page](https://josyulakp.github.io/sharpadex-force-policy/stage3/).
+
+**The operator's own commands succeed in only 36 % of the simulated runs.** The simulator is a rough reconstruction
+(section 7.4), so these are success rates in that simulator, not estimates for the robot.
+
+### 7.1 The setup
+
+- **Scene.** The two hands (floating, each pulled to its commanded hand-base pose), a table, a plate and an eraser.
+  Plate, eraser and table are placed per episode from the stereo cameras and the recorded fingertips. 304 of the 343
+  episodes of the task could be built and 301 are at most 30 s long: 240 to train in, 32 validation scenes set aside
+  from them, and 29 held-out scenes, which are the policy's own held-out episodes. Friction, masses and five scene
+  corrections were calibrated on 60 training scenes so that the operator's commands complete the task as often as possible.
+- **Task success.** The eraser travels at least 10 cm over the plate while it presses on it (above 1 N) and the plate is
+  held (3 cm above the table), and at the end the plate lies on the table again.
+- **Frozen model.** The released four-expert model (seed 0) reads the recorded observations and re-predicts every
+  8 frames, as in the offline replays. Its commands are the reference; it does not see the simulated scene.
+- **Corrections.** Every 0.2 s a network with two hidden layers of 256 units (the actor) outputs 12 numbers: a position offset of
+  each hand base (within ±2 cm per axis) and three finger synergies per hand (principal components of the operator's
+  hand commands, within ±0.75 standard deviations), rate-limited. It sees the frozen model's contact and phase
+  read-outs, the plate and the eraser relative to the hands, the simulated fingertip forces, the hand posture and how far
+  hands and fingers are from their commands.
+- **Learning.** As in Facet-0: twin critics, a readiness gate on the critic before any of its gradient reaches the
+  actor, and imitation of the corrections of successful episodes with a weight that falls from 1.0 to 0.3. Reward is
+  dense progress (lift, hold, wiped path, plate set down), at most 1 per episode. Every training episode perturbs the
+  scene: objects shifted by up to 1 cm, the eraser turned by up to 8°, friction and mass scaled by 0.7 to 1.3.
+  24,000 episodes, 2.9 h on 30 CPU processes and one GPU.
+
+### 7.2 Where the gain comes from
+
+| Share of the 580 held-out runs | Frozen model | With corrections |
+|---|---|---|
+| Success | 29.3 % | 62.9 % |
+| Eraser travel under 10 cm | 37.6 % | 18.1 % |
+| Plate never picked up | 14.5 % | 5.3 % |
+| Plate dropped off the table | 14.3 % | 8.3 % |
+| Wiped, plate not set down properly | 4.3 % | 5.3 % |
+
+Of the 410 runs the frozen model fails, the corrections turn 253 into successes; of the 170 it completes, they break 58.
+
+**Most of the gain is a reaction to the scene, not a fixed adjustment.** The corrections use two thirds of their range
+on average, but their mean over time is small (at most 0.32 of the range in any of the 12 dimensions) against their
+variation within an episode (0.61). Two open-loop replacements were built from the actor's own corrections on the
+held-out scenes and run under the same 20 perturbations (`scripts/s3_fixed.py`):
+
+| 29 held-out scenes × 20 perturbations | Task success | Minus frozen (paired) |
+|---|---|---|
+| Frozen model | 29.3 % | |
+| The actor's mean correction, held constant | 36.4 % | +7.1 points [+0.3, +13.3] |
+| Its mean while the recording wipes, and its mean otherwise | 39.3 % | +10.0 points [+2.6, +17.4] |
+| The actor | 62.9 % | +33.6 points [+24.7, +42.6] |
+
+The actor is 24 points above the better of the two ([+14, +32]).
+
+**The critic's gradient is what makes it work.** The matched control of Facet-0 keeps everything (schedule, exploration,
+imitation of the corrections of successful episodes) and removes only the critic's gradient from the actor. It ends
+below the frozen model: 13.6 % on the same held-out runs, −15.7 points [−25.0, −7.1]. A likely reason: imitating
+whatever was executed in episodes that happened to succeed copies the exploration noise along with the useful part.
+
+**A second training run confirms the size, not every detail.** With another seed (networks, order of scenes,
+perturbations, exploration noise) success on the same held-out runs is 57.9 %, +28.6 points [+19.7, +37.2]. It learns
+more slowly at first and ends at a similar level on the validation scenes (59 % against 64 %). The plate is picked up
+more often (+9.0 points) and the eraser travels further (+6.4 cm), as in the first run; the drop rate does not fall
+(14.3 % against 15.0 %), so the −6.6 points of the first run are not a stable effect.
+
+### 7.3 What failed first
+
+- **First design: the actor also read the frozen model's pooled token.** Success in the training scenes rose from 24 %
+  to 50 %; on the held-out scenes it went from 43 % to 37 % (−6 points, [−17, +6]). The token is computed from the
+  recorded cameras, so it identifies the recording, and the actor had learned one set of corrections per training scene.
+- **Second design: no token, but the actor still saw the reference motion** (the next commands and the joint targets).
+  Stopped after 6,550 episodes with the training scenes at 45 % and the validation scenes flat at 34 to 38 %. The
+  reference motion identifies the recording as well. In the final design only the critic sees it.
+- **First task definition.** "Plate back on the table" required a tilt under 45°, which cut through the pose the model
+  plate comes to rest in (it stands on a narrow stem and leans by 38 to 59°), and the wipe path counted contact jitter
+  (about half as much again). Both were replaced (resting on the table; path of the smoothed eraser position in the
+  plate's frame). The numbers of the first two designs above are under the first definition.
+- **The held-out scenes were looked at once before the final run,** to diagnose the first design. Every later choice was
+  made on the 32 validation scenes; the final actor is the last checkpoint, not a selected one.
+
+### 7.4 Limits of this result
+
+- **It is a result in a rough simulator, not on a robot.** Simulated fingertip forces peak at about 200 N where the
+  recorded ones peak at about 40 N; the plate is a disc on a stem; the arms are left out. The operator's own commands
+  complete the task in a third of the runs, so most failures of the frozen model are failures of the reconstruction.
+  What the corrections learned is in part how to do the task in this simulator.
+- **The frozen model does not close the loop.** It reads the recorded observations; only the corrections react to the
+  simulated scene. A rendered camera and a simulated tactile image would be needed to run the model itself in the loop.
+- **The actor is given the object poses** from the simulator. On a robot they would have to come from the cameras.
+- **The critic sees the simulator's state.** It is used in training only.
+- **One task.**
+
+### 7.5 Training curves of the three stages
+
+The stages follow Facet-0: supervised training, offline refinement with a critic, online corrections. Stage 3 above was
+applied directly to the stage-1 model. Stage 2 was run on the flow-matching policy (path 7 of section 3), gave no clear
+gain, and is not part of the released model.
+
+![Stage 1: training loss and held-out joint error of the released model](reports/figures/stage1_curves.png)
+
+Stage 1, the released four-expert model: training loss of the three seeds (one batch every 200 steps, from
+`runs/headline/full/seed*/train_log.json`) and the held-out joint error of the two checkpoints every run keeps. There is
+no held-out curve during training.
+
+![Stage 2: critic and refinement of the flow policy](reports/figures/stage2_curves.png)
+
+Stage 2: the critic's loss and its error on held-out episodes (0.29 against 0.57 for a constant guess), the training
+loss of the refined flow policy against plain continued training, and the held-out joint error of both (17.19 against
+17.29 mrad, −0.10 [−0.21, +0.02]). The critic curve is a re-run with the original settings and seed, because the first
+run printed its curve without saving it; the labels the refinement was trained on are from the first run.
+
+Stage 3 is the first figure of this section. All curves, the result and the videos of all 29 held-out scenes are on the
+[stage 3 page](https://josyulakp.github.io/sharpadex-force-policy/stage3/).
+
+## 8. Limits
 
 - **Offline error is not task success.** Every headline number is the distance to the operator's command on recorded
-  frames. No policy was run on a robot or scored for success.
+  frames. No policy was run on a robot. Success was scored only in the simulation of section 7, for one task, and that
+  simulation has its own limits (section 7.4).
 - **Three tasks, one robot, 4.3 hours.** The instruction input is unused at this scale (section 4).
 - **The ablation of each way of using force is from the two-expert model at 8k steps,** and the scaling curves are at
   8k steps. At 50k steps there are only the with-force and without-force runs of both approaches.
@@ -319,7 +465,7 @@ tactile latents from the last 8, the joints and the commands. The tactile expert
 - **The tactile world model was trained on one task** and its latents are used on all three.
 - **The video-model rollouts replay the forces of the recording** and have no success measure (section 6.1).
 
-## 8. Reproduce
+## 9. Reproduce
 
 Setup, data download and every command are in [README.md](README.md). The numbers of this page:
 
@@ -331,5 +477,6 @@ Setup, data download and every command are in [README.md](README.md). The number
 | Sections 4 and 5 | `python scripts/report_steps.py`, `python scripts/aggregate.py three_tasks` | `reports/results/steps_4_5.md`, `three_tasks.md`, `scaling.png` |
 | Paths 6 to 8 and 12 | `python scripts/report_flow.py`, `python scripts/rl_report.py`, `python scripts/ebr_report.py`, `python scripts/ht_report.py` | `reports/results/` |
 | Section 6.1 | `python scripts/ps_report.py` | `reports/results/world_model_policy.md` |
+| Section 7 | `python scripts/s3_eval.py name=rl seeds=20`, `python scripts/s3_fixed.py name=rl`, `python scripts/s3_report.py`, `python scripts/stage_curves.py` (training: README, stage 3) | `runs/stage3/rl/eval_heldout.json`, `fixed_heldout.json`, `reports/results/stage3.md`, `reports/figures/stage3_curve.png` |
 | Figures of this page | `python scripts/results_figures.py` | `reports/figures/` |
 | The figure of section 5 and its numbers | `python scripts/report_figures.py` | `reports/report/` |

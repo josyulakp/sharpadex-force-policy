@@ -61,13 +61,16 @@ class Episode:
     def locate_plate(self, t: int = 0) -> dict:
         """Plate centre (root frame, m) and radius (m) from the stereo pair at frame t."""
         K = {c: np.array(self.calib["cameras"][c]["camera_matrix"]) for c in ("head_left", "head_right")}
-        cands = {c: _discs(self.video_frame(c, t)) for c in K}
+        imgs = {c: self.video_frame(c, t) for c in K}
         # the plate is the pair of round blobs on the same image row with a plausible disparity
         T_rl = np.array(self.calib["stereo_extrinsics"]["T_head_right_camera_head_left_camera"])
         P1, P2 = K["head_left"] @ np.eye(4)[:3], K["head_right"] @ T_rl[:3]
         best = None
-        for a in cands["head_left"]:
-            for b in cands["head_right"]:
+        for bright in (150, 210):                                         # the stricter mask separates the plate from a hand next to it
+            cands = {c: _discs(imgs[c], bright) for c in K}
+            if best is not None:
+                break
+            for a, b in ((a, b) for a in cands["head_left"] for b in cands["head_right"]):
                 A = np.array([a[0] * P1[2] - P1[0], a[1] * P1[2] - P1[1], b[0] * P2[2] - P2[0], b[1] * P2[2] - P2[1]])
                 X = np.linalg.svd(A)[2][-1]
                 X = X[:3] / X[3]                                          # head-left camera frame
@@ -83,10 +86,10 @@ class Episode:
                 "pixel_left": a[:2], "pixel_right": b[:2]}
 
 
-def _discs(img: np.ndarray) -> list[tuple]:
+def _discs(img: np.ndarray, level: int = 150) -> list[tuple]:
     """Bright, colourless, round blobs that do not touch the image border: (cx, cy, width, height)."""
     g = img.astype(float)
-    bright = (g.min(2) > 150) & ((g.max(2) - g.min(2)) < 40)
+    bright = (g.min(2) > level) & ((g.max(2) - g.min(2)) < 40)
     lab, _ = ndi.label(ndi.binary_opening(bright, iterations=2))
     out = []
     for i, sl in enumerate(ndi.find_objects(lab), 1):

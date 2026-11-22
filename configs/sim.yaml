@@ -1,21 +1,29 @@
 # Simulation of clean_plate_with_eraser in MuJoCo (sim/). Everything that is estimated rather than measured is here.
-timestep: 0.0016666667          # s = 1/600; a 30 Hz frame spans 20 physics steps (targets are interpolated)
+timestep: 0.0033333333          # s = 1/300; a 30 Hz frame spans 10 physics steps (targets are interpolated). 1/600 gives the same outcome statistics at twice the cost
 impratio: 10                    # stiffer friction constraint, less slip in grasps
-arm_kd: [7.5, 7.5, 2, 7.5, 1, 1, 1]            # arms are passive (gravity-compensated, damped); the hand bases are pulled to the commanded pose
-weld_solref: [0.02, 1.0]        # stiffness of that pull (time constant in s, damping ratio)
+weld_solref: [0.0135, 1.0]        # the pull of each floating hand base to its commanded pose (time constant in s, damping ratio)
 table:  {x: 0.68, y: 0.0, z: 0.81, half_x: 0.42, half_y: 0.7, friction: 0.8}   # z is replaced by the height measured per episode
-plate:  {radius: 0.095, rim_thickness: 0.007, foot_radius: 0.04, foot_height: 0.05, steps: 6, flare: 2.0, mass: 0.25, friction: 1.0}   # radius and height are replaced by per-episode measurements
-eraser: {half_size: [0.07, 0.0275, 0.015], handle_half_size: [0.05, 0.014, 0.018], mass: 0.08, friction: 1.0}   # block with a grip on top
-camera: {pos: [1.9, 0.0, 2.0]}
+plate:  {radius: 0.095, rim_thickness: 0.0116, foot_radius: 0.0332, foot_height: 0.05, steps: 1, flare: 2.0, mass: 0.280, friction: 2.88}
+#        steps 1: a flat disc on a stem, so the fingers can slide under it as in the videos (steps > 1: stacked discs flaring out, the first model).
+#        radius and height are replaced by per-episode measurements. The high friction stands for the elastomer fingertips.
+eraser: {half_size: [0.07, 0.0275, 0.015], handle_half_size: [0.05, 0.014, 0.018], mass: 0.08, friction: 1.70}   # block with a grip on top
+camera: {pos: [1.5, 0.0, 1.75], target: [0.55, 0.0, 0.85]}
 settle_s: 0.5                   # hold the first recorded pose before the stream starts
 grasp_force_n: 1.0              # right-hand fingertip force that marks the eraser grasp (used to place the eraser)
 eraser_subtask: 1               # subtask index of "pick up the eraser"
-locked_joints: [lower_body_joint_1, lower_body_joint_2, lower_body_joint_3, lower_body_joint_4, lower_body_joint_5,
-                neck_joint_1, neck_joint_2, neck_joint_3]
-arm_start: [1.3, -0.6, -0.25, 1.0, 0.0, 0.0, 0.0]   # arm posture the inverse kinematics starts from (model joint convention)
 video: {width: 640, height: 480, stride: 2}
 score: {lift_m: 0.03, wipe_force_n: 1.0}       # object counts as lifted above 3 cm; wiping = eraser pressed on the plate above 1 N
 fingertip_radius: 0.009         # m; distance from the fingertip body origin to its surface, used for the table height
 plate_subtask: 0                # subtask index of "pick up the plate"
 rim_overlap: 0.015              # m; how far inside the rim the pinching fingertips sit
 rim_radius_tolerance: 0.02          # pinch radius further than this from the stereo radius -> use the stereo disc
+
+# Calibrated on the operator's own episodes (scripts/sim_calibrate.py: 60 training scenes, cross-entropy search, 10 generations).
+# The values above for weld_solref, the plate's rim_thickness, foot_radius, mass and friction and the eraser's friction come from it too.
+hand_kp_scale: 1.041           # scale of the finger servo stiffness
+calib:                          # corrections of the scene located from the cameras and the fingertips (m, robot root frame)
+  plate_dx: 0.0105              # plate centre, away from the robot
+  plate_dy: -0.0043             # plate centre, to the robot's left
+  plate_dz: 0.0011              # height of the plate's top
+  plate_dr: 0.0143              # plate radius
+  table_dz: -0.0047             # table height

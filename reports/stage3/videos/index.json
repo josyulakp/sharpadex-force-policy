@@ -1,0 +1,1138 @@
+{
+ "name": "rl",
+ "ckpt": "ckpt.pt",
+ "split": "heldout",
+ "videos": [
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_14_25_36_train/000020",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_14_25_36_train__000020_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 0.0,
+     "wipe_s": 0.0,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 4.239376634239345,
+     "final_plate_lift_cm": 2.1233852079183047,
+     "final_plate_tilt_deg": 40.00419657242654,
+     "final_plate_gap_cm": -0.03500696246566681,
+     "success": false,
+     "wipe_path_smooth_cm": 0.0,
+     "wipe_extent_cm": 0.0,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 16.196539279310894,
+     "wipe_s": 3.5,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 9.525612359894243,
+     "final_plate_lift_cm": 2.121802811653639,
+     "final_plate_tilt_deg": 39.80711180067036,
+     "final_plate_gap_cm": -0.003584761999964048,
+     "success": true,
+     "wipe_path_smooth_cm": 12.54819030443253,
+     "wipe_extent_cm": 9.3207226234633,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_10_54_31_train/000003",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_10_54_31_train__000003_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 38.73302296529007,
+     "wipe_s": 5.6,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 6.62527374019154,
+     "final_plate_lift_cm": 2.0994856954717256,
+     "final_plate_tilt_deg": 39.52937959676163,
+     "final_plate_gap_cm": -0.04934914846246308,
+     "success": true,
+     "wipe_path_smooth_cm": 25.670027636351243,
+     "wipe_extent_cm": 12.93272723259731,
+     "success_strict": true
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 48.31951336433653,
+     "wipe_s": 6.8,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 8.879599016379924,
+     "final_plate_lift_cm": 0.7343996516622875,
+     "final_plate_tilt_deg": 15.170047455448833,
+     "final_plate_gap_cm": -0.1343177858669442,
+     "success": true,
+     "wipe_path_smooth_cm": 35.658326471700796,
+     "wipe_extent_cm": 25.105909589089826,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_10_54_31_train/000030",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_10_54_31_train__000030_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 15.72712547584601,
+     "wipe_s": 2.433333333333333,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 10.65366937635428,
+     "final_plate_lift_cm": 9.694017229835417,
+     "final_plate_tilt_deg": 74.68500103994168,
+     "final_plate_gap_cm": 0.0006657248609487354,
+     "success": false,
+     "wipe_path_smooth_cm": 9.858649519923407,
+     "wipe_extent_cm": 19.41374682039931,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": false,
+     "eraser_lifted": true,
+     "wipe_path_cm": 0.0,
+     "wipe_s": 0.0,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 1.7984542797121028,
+     "final_plate_lift_cm": 1.2771649215981284e-05,
+     "final_plate_tilt_deg": 0.001399060980058394,
+     "final_plate_gap_cm": -1.2931567683338585e-05,
+     "success": false,
+     "wipe_path_smooth_cm": 0.0,
+     "wipe_extent_cm": 0.0,
+     "success_strict": false
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_19_27_11_train/000089",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_19_27_11_train__000089_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 21.05832468067286,
+     "wipe_s": 1.7,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 11.777164370027615,
+     "final_plate_lift_cm": 0.4214727010413366,
+     "final_plate_tilt_deg": 9.181085829216785,
+     "final_plate_gap_cm": -0.10816902032246833,
+     "success": true,
+     "wipe_path_smooth_cm": 24.447593697326482,
+     "wipe_extent_cm": 14.729651496428811,
+     "success_strict": true
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 25.386729002116436,
+     "wipe_s": 3.533333333333333,
+     "plate_placed": false,
+     "plate_dropped": true,
+     "plate_max_lift_cm": 14.075795036640093,
+     "final_plate_lift_cm": -7.255768464342605,
+     "final_plate_tilt_deg": 132.46893725345802,
+     "final_plate_gap_cm": -19.962141780350372,
+     "success": false,
+     "wipe_path_smooth_cm": 21.376713475188573,
+     "wipe_extent_cm": 14.49577623268173,
+     "success_strict": false
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_14_25_36_train/000034",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_14_25_36_train__000034_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 0.0,
+     "wipe_s": 0.0,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 5.99883232234486,
+     "final_plate_lift_cm": 1.6421291026968987e-05,
+     "final_plate_tilt_deg": 0.00047541011514886267,
+     "final_plate_gap_cm": 6.855969408858797e-05,
+     "success": false,
+     "wipe_path_smooth_cm": 0.0,
+     "wipe_extent_cm": 0.0,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 28.139317303160144,
+     "wipe_s": 3.1666666666666665,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 11.116166445553311,
+     "final_plate_lift_cm": 1.5389590866045966,
+     "final_plate_tilt_deg": 27.892796858143214,
+     "final_plate_gap_cm": -0.014119327043748964,
+     "success": true,
+     "wipe_path_smooth_cm": 18.698732109102124,
+     "wipe_extent_cm": 11.00026584370211,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_10_54_31_train/000006",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_10_54_31_train__000006_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 18.463254775360298,
+     "wipe_s": 2.2333333333333334,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 8.84167175569982,
+     "final_plate_lift_cm": 1.984613665309809,
+     "final_plate_tilt_deg": 36.76722034828699,
+     "final_plate_gap_cm": -0.0026423215645721143,
+     "success": true,
+     "wipe_path_smooth_cm": 10.189602606363927,
+     "wipe_extent_cm": 7.631887621180292,
+     "success_strict": true
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 20.6633457512006,
+     "wipe_s": 2.8,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 5.814150210591196,
+     "final_plate_lift_cm": 1.9842902061257495,
+     "final_plate_tilt_deg": 37.03382072360913,
+     "final_plate_gap_cm": -0.05380626168639546,
+     "success": true,
+     "wipe_path_smooth_cm": 16.2415059539199,
+     "wipe_extent_cm": 26.999409369927236,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_14_25_36_train/000026",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_14_25_36_train__000026_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 0.0,
+     "wipe_s": 0.0,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 6.105321657431562,
+     "final_plate_lift_cm": 4.833800961723256e-05,
+     "final_plate_tilt_deg": 0.0016317035040805394,
+     "final_plate_gap_cm": -3.121879632583813e-05,
+     "success": false,
+     "wipe_path_smooth_cm": 0.0,
+     "wipe_extent_cm": 0.0,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 0.0,
+     "wipe_s": 0.0,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 6.713642225240757,
+     "final_plate_lift_cm": 1.6808686075461932,
+     "final_plate_tilt_deg": 30.630803638097483,
+     "final_plate_gap_cm": -0.030545490490774263,
+     "success": false,
+     "wipe_path_smooth_cm": 0.0,
+     "wipe_extent_cm": 0.0,
+     "success_strict": false
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_14_25_36_train/000060",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_14_25_36_train__000060_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 5.288941640108789,
+     "wipe_s": 0.4,
+     "plate_placed": false,
+     "plate_dropped": true,
+     "plate_max_lift_cm": 13.063786556190172,
+     "final_plate_lift_cm": -9.329778073194106,
+     "final_plate_tilt_deg": 153.0913074557915,
+     "final_plate_gap_cm": -19.79585554889297,
+     "success": false,
+     "wipe_path_smooth_cm": 2.6480512727301173,
+     "wipe_extent_cm": 3.2339288982764414,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 25.29589796828835,
+     "wipe_s": 3.6666666666666665,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 11.791704560737449,
+     "final_plate_lift_cm": -1.0421996377019127e-05,
+     "final_plate_tilt_deg": 0.0002004477977155645,
+     "final_plate_gap_cm": 2.7414170722384057e-05,
+     "success": true,
+     "wipe_path_smooth_cm": 21.478786146845255,
+     "wipe_extent_cm": 14.137414212640062,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_14_25_36_train/000086",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_14_25_36_train__000086_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 23.284149758881526,
+     "wipe_s": 2.7666666666666666,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 11.13345189348356,
+     "final_plate_lift_cm": 1.905041592945178,
+     "final_plate_tilt_deg": 35.41172235467675,
+     "final_plate_gap_cm": -0.06784624049758214,
+     "success": true,
+     "wipe_path_smooth_cm": 16.259138172270262,
+     "wipe_extent_cm": 11.105012984345546,
+     "success_strict": true
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 21.16840470251368,
+     "wipe_s": 2.8666666666666667,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 9.983716834142287,
+     "final_plate_lift_cm": 1.9053406147338303,
+     "final_plate_tilt_deg": 35.08949927102538,
+     "final_plate_gap_cm": -0.0031307276597281053,
+     "success": true,
+     "wipe_path_smooth_cm": 15.275830660684154,
+     "wipe_extent_cm": 15.29630359078515,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_14_25_36_train/000065",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_14_25_36_train__000065_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 9.778204149660006,
+     "wipe_s": 0.7333333333333333,
+     "plate_placed": false,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 9.014002005741373,
+     "final_plate_lift_cm": 2.1824646823926153,
+     "final_plate_tilt_deg": 41.105695646477116,
+     "final_plate_gap_cm": -3.1726765191665063,
+     "success": false,
+     "wipe_path_smooth_cm": 6.345273441236207,
+     "wipe_extent_cm": 7.830943636331804,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 13.211822020823918,
+     "wipe_s": 0.8,
+     "plate_placed": false,
+     "plate_dropped": true,
+     "plate_max_lift_cm": 14.727701355783296,
+     "final_plate_lift_cm": -8.59531405454147,
+     "final_plate_tilt_deg": 113.603434647471,
+     "final_plate_gap_cm": -23.334162818622406,
+     "success": false,
+     "wipe_path_smooth_cm": 6.654329381909112,
+     "wipe_extent_cm": 6.815604622180841,
+     "success_strict": false
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_14_25_36_train/000061",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_14_25_36_train__000061_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 22.375565500496034,
+     "wipe_s": 4.033333333333333,
+     "plate_placed": false,
+     "plate_dropped": true,
+     "plate_max_lift_cm": 12.242485744398056,
+     "final_plate_lift_cm": -7.180010142643878,
+     "final_plate_tilt_deg": 119.80337870526446,
+     "final_plate_gap_cm": -20.7028862421075,
+     "success": false,
+     "wipe_path_smooth_cm": 12.61784494397051,
+     "wipe_extent_cm": 11.053103335198482,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 24.613827224439344,
+     "wipe_s": 4.033333333333333,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 10.813476025960632,
+     "final_plate_lift_cm": 1.8611818608763375,
+     "final_plate_tilt_deg": 34.12730812712063,
+     "final_plate_gap_cm": -0.0013858135992417253,
+     "success": true,
+     "wipe_path_smooth_cm": 16.169878320867326,
+     "wipe_extent_cm": 9.288007031599523,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_16_43_25_train/000006",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_16_43_25_train__000006_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 17.08134188349411,
+     "wipe_s": 4.633333333333334,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 11.726251463033666,
+     "final_plate_lift_cm": 1.0628417931801026,
+     "final_plate_tilt_deg": 18.73622630313083,
+     "final_plate_gap_cm": -0.0034827543680338025,
+     "success": true,
+     "wipe_path_smooth_cm": 10.742796439896573,
+     "wipe_extent_cm": 12.053735787248115,
+     "success_strict": true
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 18.024935155638182,
+     "wipe_s": 4.433333333333334,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 11.159514064616404,
+     "final_plate_lift_cm": 1.6928907402408822,
+     "final_plate_tilt_deg": 25.65189804485307,
+     "final_plate_gap_cm": 0.0005095375501085186,
+     "success": true,
+     "wipe_path_smooth_cm": 22.406885762494415,
+     "wipe_extent_cm": 14.766917895898523,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_14_25_36_train/000085",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_14_25_36_train__000085_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 24.714475059811765,
+     "wipe_s": 4.033333333333333,
+     "plate_placed": false,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 8.63566607927928,
+     "final_plate_lift_cm": 4.123684124990312,
+     "final_plate_tilt_deg": 105.57490334586832,
+     "final_plate_gap_cm": -8.529031629362738,
+     "success": false,
+     "wipe_path_smooth_cm": 26.60028312954555,
+     "wipe_extent_cm": 17.7337935166412,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 51.07928926222177,
+     "wipe_s": 4.4,
+     "plate_placed": false,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 12.879555114812668,
+     "final_plate_lift_cm": 8.617365908791353,
+     "final_plate_tilt_deg": 164.4346996865262,
+     "final_plate_gap_cm": 0.00027636113197893053,
+     "success": false,
+     "wipe_path_smooth_cm": 35.738194421625614,
+     "wipe_extent_cm": 25.895853431434247,
+     "success_strict": false
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_16_43_25_train/000022",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_16_43_25_train__000022_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 3.9118629765597817,
+     "wipe_s": 0.2,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 7.411585330684112,
+     "final_plate_lift_cm": 0.3932942621728719,
+     "final_plate_tilt_deg": 6.759023014373847,
+     "final_plate_gap_cm": 0.0025974738602774217,
+     "success": false,
+     "wipe_path_smooth_cm": 1.1762771393826303,
+     "wipe_extent_cm": 1.6440063760444397,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 15.022528266518318,
+     "wipe_s": 1.6,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 9.12533917276781,
+     "final_plate_lift_cm": 0.3535557449137694,
+     "final_plate_tilt_deg": 7.01360604770367,
+     "final_plate_gap_cm": -0.0517864083685593,
+     "success": true,
+     "wipe_path_smooth_cm": 12.44747441474686,
+     "wipe_extent_cm": 8.668059908426802,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_19_27_11_train/000080",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_19_27_11_train__000080_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 32.8423574981589,
+     "wipe_s": 3.8333333333333335,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 9.868127825820316,
+     "final_plate_lift_cm": 2.1191699651652574,
+     "final_plate_tilt_deg": 39.75152687155341,
+     "final_plate_gap_cm": -0.003803801574875365,
+     "success": true,
+     "wipe_path_smooth_cm": 29.095559410738396,
+     "wipe_extent_cm": 12.911655491393217,
+     "success_strict": true
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 20.090476944944694,
+     "wipe_s": 2.533333333333333,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 10.486208582906231,
+     "final_plate_lift_cm": 2.117614856735983,
+     "final_plate_tilt_deg": 39.73133570687027,
+     "final_plate_gap_cm": -0.00445927191417006,
+     "success": true,
+     "wipe_path_smooth_cm": 19.017540739246698,
+     "wipe_extent_cm": 18.222548237851992,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_16_43_25_train/000010",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_16_43_25_train__000010_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": false,
+     "eraser_lifted": true,
+     "wipe_path_cm": 0.0,
+     "wipe_s": 0.0,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 2.2840202954294675,
+     "final_plate_lift_cm": 0.1455882604011305,
+     "final_plate_tilt_deg": 3.749890304896133,
+     "final_plate_gap_cm": -0.07147865602227244,
+     "success": false,
+     "wipe_path_smooth_cm": 0.0,
+     "wipe_extent_cm": 0.0,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": false,
+     "eraser_lifted": true,
+     "wipe_path_cm": 0.0,
+     "wipe_s": 0.0,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 2.912778561737539,
+     "final_plate_lift_cm": 1.9753378474061778,
+     "final_plate_tilt_deg": 36.6087484833467,
+     "final_plate_gap_cm": -0.004470556924707214,
+     "success": false,
+     "wipe_path_smooth_cm": 0.0,
+     "wipe_extent_cm": 0.0,
+     "success_strict": false
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_16_43_25_train/000043",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_16_43_25_train__000043_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 2.232507201979874,
+     "wipe_s": 0.03333333333333333,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 6.671972185851449,
+     "final_plate_lift_cm": 0.47039614805757246,
+     "final_plate_tilt_deg": 8.05784101124104,
+     "final_plate_gap_cm": -0.01229418945212224,
+     "success": false,
+     "wipe_path_smooth_cm": 0.7212852371859773,
+     "wipe_extent_cm": 0.0,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 31.91284549661445,
+     "wipe_s": 3.2,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 8.323130406303381,
+     "final_plate_lift_cm": 0.02639741998228251,
+     "final_plate_tilt_deg": 0.00033185996026360246,
+     "final_plate_gap_cm": 0.009061287541234364,
+     "success": true,
+     "wipe_path_smooth_cm": 10.402237856407693,
+     "wipe_extent_cm": 3.079290430554776,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_19_27_11_train/000086",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_19_27_11_train__000086_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 32.252023039144554,
+     "wipe_s": 3.4,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 12.397251171852941,
+     "final_plate_lift_cm": 0.06060977870161466,
+     "final_plate_tilt_deg": 1.9197570782575022,
+     "final_plate_gap_cm": -0.0505600398421735,
+     "success": true,
+     "wipe_path_smooth_cm": 28.844005959705893,
+     "wipe_extent_cm": 25.529709233632715,
+     "success_strict": true
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 43.948935198579335,
+     "wipe_s": 5.066666666666666,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 11.718567737995722,
+     "final_plate_lift_cm": 5.757335520918372,
+     "final_plate_tilt_deg": 46.11847180350846,
+     "final_plate_gap_cm": -0.08389702668196719,
+     "success": true,
+     "wipe_path_smooth_cm": 28.548751831212872,
+     "wipe_extent_cm": 16.54663367795548,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_19_27_11_train/000097",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_19_27_11_train__000097_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 0.0,
+     "wipe_s": 0.0,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 3.630682996725776,
+     "final_plate_lift_cm": -4.076104304084893e-05,
+     "final_plate_tilt_deg": 0.0012775118659301013,
+     "final_plate_gap_cm": -2.2952885914140353e-05,
+     "success": false,
+     "wipe_path_smooth_cm": 0.0,
+     "wipe_extent_cm": 0.0,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 0.0,
+     "wipe_s": 0.0,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 5.281311610541984,
+     "final_plate_lift_cm": 0.6773878988823534,
+     "final_plate_tilt_deg": 13.351870494284224,
+     "final_plate_gap_cm": -0.08921009918115841,
+     "success": false,
+     "wipe_path_smooth_cm": 0.0,
+     "wipe_extent_cm": 0.0,
+     "success_strict": false
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_16_43_25_train/000048",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_16_43_25_train__000048_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": false,
+     "wipe_path_cm": 0.0,
+     "wipe_s": 0.0,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 10.207622098011903,
+     "final_plate_lift_cm": 0.1519803066878711,
+     "final_plate_tilt_deg": 2.6010721775599692,
+     "final_plate_gap_cm": 0.0014626831231989712,
+     "success": false,
+     "wipe_path_smooth_cm": 0.0,
+     "wipe_extent_cm": 0.0,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 22.910079565907164,
+     "wipe_s": 3.4,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 7.690415069402068,
+     "final_plate_lift_cm": 0.2452962005699555,
+     "final_plate_tilt_deg": 5.5749181927473135,
+     "final_plate_gap_cm": -0.07708300806541502,
+     "success": true,
+     "wipe_path_smooth_cm": 13.914792376347537,
+     "wipe_extent_cm": 6.1246349034881655,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_19_27_11_train/000118",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_19_27_11_train__000118_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 28.818134436376834,
+     "wipe_s": 3.5,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 7.510334821848796,
+     "final_plate_lift_cm": -0.001541283107553415,
+     "final_plate_tilt_deg": 0.00973153277587363,
+     "final_plate_gap_cm": -0.0020763691093161896,
+     "success": true,
+     "wipe_path_smooth_cm": 18.77349473587736,
+     "wipe_extent_cm": 9.465357366280113,
+     "success_strict": true
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 30.68799160514903,
+     "wipe_s": 2.966666666666667,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 11.190799971226129,
+     "final_plate_lift_cm": 0.00017154259118745685,
+     "final_plate_tilt_deg": 0.000713695532713064,
+     "final_plate_gap_cm": 0.00015899460191759474,
+     "success": true,
+     "wipe_path_smooth_cm": 20.36822908393392,
+     "wipe_extent_cm": 9.418398553547053,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_19_27_11_train/000116",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_19_27_11_train__000116_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 0.0,
+     "wipe_s": 0.0,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 4.178664264100551,
+     "final_plate_lift_cm": 0.34056715628928425,
+     "final_plate_tilt_deg": 6.579787178366233,
+     "final_plate_gap_cm": -0.03983687731471397,
+     "success": false,
+     "wipe_path_smooth_cm": 0.0,
+     "wipe_extent_cm": 0.0,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 14.122472614245584,
+     "wipe_s": 2.2,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 8.76625751258453,
+     "final_plate_lift_cm": 0.00017115390028576982,
+     "final_plate_tilt_deg": 0.0001893068592013704,
+     "final_plate_gap_cm": 0.00018399952699255095,
+     "success": false,
+     "wipe_path_smooth_cm": 8.747183904101512,
+     "wipe_extent_cm": 3.1669027324171344,
+     "success_strict": false
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_19_27_11_train/000008",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_19_27_11_train__000008_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 34.30608941807455,
+     "wipe_s": 3.466666666666667,
+     "plate_placed": false,
+     "plate_dropped": true,
+     "plate_max_lift_cm": 20.782958591859114,
+     "final_plate_lift_cm": -10.245934678664925,
+     "final_plate_tilt_deg": 105.6072822087753,
+     "final_plate_gap_cm": -25.189776564808707,
+     "success": false,
+     "wipe_path_smooth_cm": 16.880607635907467,
+     "wipe_extent_cm": 10.755131472912431,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 21.636030007595647,
+     "wipe_s": 4.133333333333334,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 7.554231632409292,
+     "final_plate_lift_cm": 0.00022439173721355843,
+     "final_plate_tilt_deg": 0.0011049866260184468,
+     "final_plate_gap_cm": 0.0002596284625289158,
+     "success": true,
+     "wipe_path_smooth_cm": 13.540486260019868,
+     "wipe_extent_cm": 5.437430782095347,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_19_27_11_train/000130",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_19_27_11_train__000130_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 26.42644500643484,
+     "wipe_s": 2.2666666666666666,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 6.833375970627098,
+     "final_plate_lift_cm": 1.8148198522795589,
+     "final_plate_tilt_deg": 33.24210583238175,
+     "final_plate_gap_cm": -0.005104247056930689,
+     "success": true,
+     "wipe_path_smooth_cm": 19.104528089538395,
+     "wipe_extent_cm": 11.45450751525471,
+     "success_strict": true
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 21.314084069807464,
+     "wipe_s": 3.2666666666666666,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 7.424500801180978,
+     "final_plate_lift_cm": 1.818582618183484,
+     "final_plate_tilt_deg": 33.691492779726566,
+     "final_plate_gap_cm": -0.10188123324106346,
+     "success": true,
+     "wipe_path_smooth_cm": 14.495306526293314,
+     "wipe_extent_cm": 3.5576288336350514,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_19_27_11_train/000018",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_19_27_11_train__000018_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 24.536460715267573,
+     "wipe_s": 3.8666666666666667,
+     "plate_placed": false,
+     "plate_dropped": true,
+     "plate_max_lift_cm": 12.805435594025717,
+     "final_plate_lift_cm": -7.190465014874537,
+     "final_plate_tilt_deg": 98.28260278008008,
+     "final_plate_gap_cm": -19.123985270225596,
+     "success": false,
+     "wipe_path_smooth_cm": 18.373272998038175,
+     "wipe_extent_cm": 11.084212546114472,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 21.325761203471473,
+     "wipe_s": 3.433333333333333,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 8.779345288872909,
+     "final_plate_lift_cm": 0.00027837603581160053,
+     "final_plate_tilt_deg": 0.0007853348604406275,
+     "final_plate_gap_cm": 0.0003364594690524747,
+     "success": true,
+     "wipe_path_smooth_cm": 10.743698234690296,
+     "wipe_extent_cm": 5.033481347174463,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_19_27_11_train/000020",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_19_27_11_train__000020_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": false,
+     "eraser_lifted": true,
+     "wipe_path_cm": 0.0,
+     "wipe_s": 0.0,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 1.4787464576185294,
+     "final_plate_lift_cm": -0.27303713189203993,
+     "final_plate_tilt_deg": 2.980261709956242,
+     "final_plate_gap_cm": -0.44551844266006446,
+     "success": false,
+     "wipe_path_smooth_cm": 0.0,
+     "wipe_extent_cm": 0.0,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 36.10763506635252,
+     "wipe_s": 4.3,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 10.74104163060101,
+     "final_plate_lift_cm": -0.1661209240709116,
+     "final_plate_tilt_deg": 3.2329435077822914,
+     "final_plate_gap_cm": -0.35322233550012516,
+     "success": true,
+     "wipe_path_smooth_cm": 28.666609153016193,
+     "wipe_extent_cm": 16.544987825193207,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_19_27_11_train/000030",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_19_27_11_train__000030_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 10.089604761627513,
+     "wipe_s": 0.5666666666666667,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 11.897429890744892,
+     "final_plate_lift_cm": 1.0008867720978976,
+     "final_plate_tilt_deg": 17.59323977833347,
+     "final_plate_gap_cm": -0.0025096310617533923,
+     "success": false,
+     "wipe_path_smooth_cm": 4.80783091986648,
+     "wipe_extent_cm": 15.168246229510753,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 19.542596617144387,
+     "wipe_s": 3.4,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 10.560386086183915,
+     "final_plate_lift_cm": -1.5045242207634146e-05,
+     "final_plate_tilt_deg": 0.0006819834651989735,
+     "final_plate_gap_cm": 4.3680327277417774e-05,
+     "success": true,
+     "wipe_path_smooth_cm": 18.87746181341255,
+     "wipe_extent_cm": 15.694264720173054,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_19_27_11_train/000032",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_19_27_11_train__000032_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": false,
+     "eraser_lifted": true,
+     "wipe_path_cm": 0.0,
+     "wipe_s": 0.0,
+     "plate_placed": false,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 2.9749447073319724,
+     "final_plate_lift_cm": 2.951174208984575,
+     "final_plate_tilt_deg": 62.67638852133726,
+     "final_plate_gap_cm": -6.348964720943318,
+     "success": false,
+     "wipe_path_smooth_cm": 0.0,
+     "wipe_extent_cm": 0.0,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 39.07273463376057,
+     "wipe_s": 3.3666666666666667,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 10.461324601974376,
+     "final_plate_lift_cm": 1.0044875467754455,
+     "final_plate_tilt_deg": 18.90945402964005,
+     "final_plate_gap_cm": -0.07134588706835254,
+     "success": true,
+     "wipe_path_smooth_cm": 36.2471519486951,
+     "wipe_extent_cm": 17.44532047792042,
+     "success_strict": true
+    }
+   }
+  },
+  {
+   "uid": "clean_plate_with_eraser/season_POC22027_2026_04_18_19_27_11_train/000098",
+   "seed": 0,
+   "video": "clean_plate_with_eraser__season_POC22027_2026_04_18_19_27_11_train__000098_seed0.mp4",
+   "outcome": {
+    "frozen four-expert policy": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 16.815957566980906,
+     "wipe_s": 1.4666666666666666,
+     "plate_placed": false,
+     "plate_dropped": true,
+     "plate_max_lift_cm": 13.463251462767388,
+     "final_plate_lift_cm": -7.981004142456294,
+     "final_plate_tilt_deg": 132.71228958629115,
+     "final_plate_gap_cm": -21.576159933575646,
+     "success": false,
+     "wipe_path_smooth_cm": 14.073412253535217,
+     "wipe_extent_cm": 8.981893066024321,
+     "success_strict": false
+    },
+    "with stage-3 corrections": {
+     "plate_lifted": true,
+     "eraser_lifted": true,
+     "wipe_path_cm": 20.805055633470026,
+     "wipe_s": 2.2,
+     "plate_placed": true,
+     "plate_dropped": false,
+     "plate_max_lift_cm": 12.927152291653254,
+     "final_plate_lift_cm": 0.4403666279881424,
+     "final_plate_tilt_deg": 8.339730293418915,
+     "final_plate_gap_cm": -0.04106408747777124,
+     "success": true,
+     "wipe_path_smooth_cm": 22.510575227233947,
+     "wipe_extent_cm": 13.399173014705546,
+     "success_strict": true
+    }
+   }
+  }
+ ]
+}

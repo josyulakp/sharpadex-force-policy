@@ -1,8 +1,8 @@
 """Execute a command stream (hand-base poses + hand joint targets) in the simulated scene.
 
-The hand bases are pulled to the commanded poses by soft welds; the arms follow passively (gravity
-compensated). The 44 hand joints are position-controlled with the model's own servo gains. World frame =
-the robot's root frame (the base is fixed), so recorded poses and camera-located objects need no fitting.
+The two hands float: each hand base is pulled to its commanded pose by a weld (sim/scene.py explains why the arms
+are left out). The 44 hand joints are position-controlled with the model's own servo gains. World frame = the
+robot's root frame (the base is fixed), so recorded poses and camera-located objects need no fitting.
 """
 from __future__ import annotations
 
@@ -18,27 +18,46 @@ SIDES = ("left", "right")
 TCP = {"left": slice(0, 6), "right": slice(6, 12)}
 
 
+def _pose(d: mujoco.MjData, body: int) -> np.ndarray:
+    T = np.eye(4)
+    T[:3, :3], T[:3, 3] = d.xmat[body].reshape(3, 3), d.xpos[body]
+    return T
+
+
 class Sim:
-    def __init__(self, cfg: dict, ep: Episode):
+    def __init__(self, cfg: dict, ep: Episode, objects: dict | None = None):
+        """objects: where things are, as returned by locate_objects (from an earlier build, or perturbed); located if None."""
         self.cfg, self.ep = cfg, ep
-        self.torso = ep.state[0, 58:63]
-        self.objects = o = self.locate_objects()
-        self.m = m = build(cfg, self.torso, plate_pose=(o["plate_xyz"], 0.0), eraser_pose=(o["eraser_xyz"], o["eraser_yaw"]),
+        self.objects = objects if objects is not None else self.locate_objects()
+        o, c = dict(self.objects), cfg.get("calib") or {}                 # calibrated corrections of the located scene (configs/sim.yaml)
+        o["plate_xyz"] = np.asarray(o["plate_xyz"], float) + [c.get("plate_dx", 0.0), c.get("plate_dy", 0.0), 0.0]
+        o["plate_top_z"], o["plate_radius"] = o["plate_top_z"] + c.get("plate_dz", 0.0), o["plate_radius"] + c.get("plate_dr", 0.0)
+        o["table_z"] = o["table_z"] + c.get("table_dz", 0.0)
+        self.m = m = build(cfg, plate_pose=(o["plate_xyz"], 0.0), eraser_pose=(o["eraser_xyz"], o["eraser_yaw"]),
                            table_z=o["table_z"], plate_radius=o["plate_radius"], plate_height=o["plate_top_z"] - o["table_z"])
         self.d = mujoco.MjData(m)
         bid = lambda n: mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, n)  # noqa: E731
-        names = joint_names()
+        mujoco.mj_kinematics(m, self.d)                                   # world <- root (static)
+        self.world_from_root = _pose(self.d, bid("north"))
+        self.link7 = {s: _pose(self.d, bid(f"{s}_arm_link_7")) for s in SIDES}       # static parents of the floating hand mounts
+        self.is_arm = np.zeros(58, bool)                                  # within the 58 dataset joints
+        self.is_arm[ARM_DIMS["left"]] = self.is_arm[ARM_DIMS["right"]] = True
+        names = [n for n, arm in zip(joint_names(), self.is_arm) if not arm]             # the 44 hand joints
+        jid = lambda n: mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, n)  # noqa: E731
         self.adr = qpos_adr(m, names)
-        self.dof = np.array([m.jnt_dofadr[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, n)] for n in names])
         act = {mujoco.mj_id2name(m, mujoco.mjtObj.mjOBJ_JOINT, m.actuator_trnid[i, 0]): i for i in range(m.nu)}
         self.act = np.array([act[n] for n in names])
-        self.is_arm = np.zeros(58, bool)
-        self.is_arm[ARM_DIMS["left"]] = self.is_arm[ARM_DIMS["right"]] = True
-        self.kd = np.tile(cfg["arm_kd"], 2)
+        self.free = {s: (np.array([m.jnt_qposadr[jid(f"{s}_base_{a}")] for a in "xyz"]), m.jnt_qposadr[jid(f"{s}_base_rot")]) for s in SIDES}
+        self.mount_from_base = {}
+        for s in SIDES:                                                   # hand base in its mount (constant)
+            Tm, Tb = _pose(self.d, bid(f"{s}_hand_mount")), _pose(self.d, bid(f"{s}_hand_base"))
+            self.mount0 = getattr(self, "mount0", {}) | {s: np.linalg.inv(self.link7[s]) @ Tm}
+            self.mount_from_base[s] = np.linalg.inv(Tm) @ Tb
         self.mocap = {s: m.body_mocapid[bid(f"{s}_target")] for s in SIDES}
         self.base = {s: bid(f"{s}_hand_base") for s in SIDES}
         self.root = bid("north")
         self.obj = {n: bid(n) for n in ("plate", "eraser")}
+        self.plate_geoms = [g for g in range(m.ngeom) if m.geom_bodyid[g] == self.obj["plate"]]   # cylinders
         self.forces = FingertipForces(m)
         self.substeps = round(1 / 30 / m.opt.timestep)
         self.tips = [bid(f"{s}_{f}_DP") for s in SIDES for f in FINGERS]
@@ -46,18 +65,17 @@ class Sim:
     # ---- where things are ---------------------------------------------------------------------------------
     def locate_objects(self) -> dict:
         """Plate from the stereo cameras; eraser from where the right hand first closes on it; table under the plate."""
-        m = build(self.cfg, self.torso)
+        m = build(self.cfg)
         d = mujoco.MjData(m)
         bid = lambda n: mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_BODY, n)  # noqa: E731
-        adr = qpos_adr(m, joint_names())
+        names = joint_names()
+        adr = {side: qpos_adr(m, names[HAND_DIMS[side]]) for side in SIDES}
         mujoco.mj_kinematics(m, d)
-        W = np.eye(4)                                                     # world <- root
-        W[:3, :3], W[:3, 3] = d.xmat[bid("north")].reshape(3, 3), d.xpos[bid("north")]
-        self.world_from_root = W
+        W = _pose(d, bid("north"))                                        # world <- root
 
         def tips(side, t):                                                # world positions of one hand's fingertips
             d.qpos[:] = m.qpos0
-            d.qpos[adr[HAND_DIMS[side]]] = self.ep.state[t, HAND_DIMS[side]]
+            d.qpos[adr[side]] = self.ep.state[t, HAND_DIMS[side]]
             mujoco.mj_kinematics(m, d)
             b = bid(f"{side}_hand_base")
             Rb, pb = d.xmat[b].reshape(3, 3), d.xpos[b]
@@ -96,52 +114,45 @@ class Sim:
                 "lowest_tip_z_left_right": low.min(0).tolist(), "plate_top_z": plate_top, "plate_top_z_stereo": float(centre[2])}
 
     # ---- execution ----------------------------------------------------------------------------------------
-    def _set_targets(self, pose: np.ndarray):
-        """pose [2, 12]: position + rotation matrix of the left / right hand base in the root frame."""
+    def _world_targets(self, pose: np.ndarray):
+        """pose [2, 12]: position + rotation matrix of the left / right hand base in the root frame -> world position [2, 3]
+        and quaternion [2, 4] (w, x, y, z)."""
         W = self.world_from_root
+        pos = pose[:, :3] @ W[:3, :3].T + W[:3, 3]
+        quat = np.roll(R.from_matrix(W[:3, :3] @ pose[:, 3:].reshape(2, 3, 3)).as_quat(), 1, axis=1)
+        return pos, quat
+
+    def _set_targets(self, pos: np.ndarray, quat: np.ndarray):
         for k, s in enumerate(SIDES):
-            self.d.mocap_pos[self.mocap[s]] = W[:3, :3] @ pose[k, :3] + W[:3, 3]
-            self.d.mocap_quat[self.mocap[s]] = np.roll(R.from_matrix(W[:3, :3] @ pose[k, 3:].reshape(3, 3)).as_quat(), 1)
+            self.d.mocap_pos[self.mocap[s]] = pos[k]
+            self.d.mocap_quat[self.mocap[s]] = quat[k] / np.linalg.norm(quat[k])
 
     def _physics(self, hand_target: np.ndarray):
-        m, d, arm = self.m, self.d, self.is_arm
-        d.ctrl[self.act[arm]] = d.qfrc_bias[self.dof[arm]] - self.kd * d.qvel[self.dof[arm]]
-        lo, hi = m.actuator_ctrlrange[self.act[~arm]].T
-        d.ctrl[self.act[~arm]] = np.clip(hand_target, lo, hi)
+        m, d = self.m, self.d
+        lo, hi = m.actuator_ctrlrange[self.act].T
+        d.ctrl[self.act] = np.clip(hand_target, lo, hi)
         mujoco.mj_step(m, d)
 
-    def _ik(self, iters: int = 200):
-        """Arm joints that put each hand base on its current target (damped least squares, kinematics only)."""
-        m, d = self.m, self.d
-        jp, jr = np.zeros((3, m.nv)), np.zeros((3, m.nv))
-        for s, sl in ARM_DIMS.items():
-            dof, adr = self.dof[sl], self.adr[sl]
-            lo, hi = m.jnt_range[m.dof_jntid[dof]].T
-            for _ in range(iters):
-                mujoco.mj_kinematics(m, d)
-                mujoco.mj_comPos(m, d)
-                b, k = self.base[s], self.mocap[s]
-                e_pos = d.mocap_pos[k] - d.xpos[b]
-                q_err = np.zeros(4)
-                mujoco.mju_mulQuat(q_err, d.mocap_quat[k], d.xquat[b] * [1, -1, -1, -1])
-                e_rot = np.zeros(3)
-                mujoco.mju_quat2Vel(e_rot, q_err, 1.0)
-                mujoco.mj_jacBody(m, d, jp, jr, b)
-                J, e = np.vstack([jp[:, dof], jr[:, dof]]), np.r_[e_pos, e_rot]
-                d.qpos[adr] = np.clip(d.qpos[adr] + J.T @ np.linalg.solve(J @ J.T + 1e-4 * np.eye(6), e) * 0.5, lo, hi)
+    def _place_bases(self):
+        """Put each hand base on its current target: slides and ball joint of the hand mount, relative to its static parent."""
+        d = self.d
+        for s in SIDES:
+            T = np.eye(4)
+            T[:3, :3] = R.from_quat(np.roll(d.mocap_quat[self.mocap[s]], -1)).as_matrix()
+            T[:3, 3] = d.mocap_pos[self.mocap[s]]
+            M = np.linalg.inv(self.link7[s]) @ T @ np.linalg.inv(self.mount_from_base[s])        # mount in link 7
+            slide, ball = self.free[s]
+            d.qpos[slide] = np.linalg.inv(self.mount0[s][:3, :3]) @ (M[:3, 3] - self.mount0[s][:3, 3])
+            d.qpos[ball:ball + 4] = np.roll(R.from_matrix(np.linalg.inv(self.mount0[s][:3, :3]) @ M[:3, :3]).as_quat(), 1)
 
     def reset(self, pose0: np.ndarray):
-        """Recorded torso and hand joints, arms solved onto the first commanded hand poses, then a short settle."""
+        """Recorded hand joints, hand bases on the first commanded poses, then a short settle."""
         m, d = self.m, self.d
         mujoco.mj_resetData(m, d)
-        jadr = lambda n: m.jnt_qposadr[mujoco.mj_name2id(m, mujoco.mjtObj.mjOBJ_JOINT, n)]  # noqa: E731
-        for j, v in zip(self.cfg["locked_joints"], self.torso):
-            d.qpos[jadr(j)] = v
-        d.qpos[self.adr[~self.is_arm]] = self.ep.state[0, :58][~self.is_arm]
-        d.qpos[self.adr[self.is_arm]] = np.tile(self.cfg["arm_start"], 2)
-        self.pose, self.hand = pose0.copy(), self.ep.state[0, :58][~self.is_arm].copy()
-        self._set_targets(pose0)
-        self._ik()
+        d.qpos[self.adr] = self.ep.state[0, :58][~self.is_arm]
+        self.target, self.hand = self._world_targets(pose0), self.ep.state[0, :58][~self.is_arm].copy()
+        self._set_targets(*self.target)
+        self._place_bases()
         mujoco.mj_forward(m, d)
         for _ in range(int(self.cfg["settle_s"] / m.opt.timestep)):
             self._physics(self.hand)
@@ -149,19 +160,24 @@ class Sim:
     def step(self, pose: np.ndarray, hand: np.ndarray) -> dict:
         """One 30 Hz frame: move the hand-base targets to `pose` [2, 12] and the hand joint targets to `hand` [44]."""
         fsum = np.zeros((10, 3))
+        (p0, q0), (p1, q1) = self.target, self._world_targets(pose)
+        q1 = q1 * np.where((q0 * q1).sum(1, keepdims=True) < 0, -1.0, 1.0)  # same hemisphere, then a normalised linear blend
         for k in range(self.substeps):
             a = (k + 1) / self.substeps
-            self._set_targets(self.pose + a * (pose - self.pose))        # small steps: linear blend of the matrices
+            self._set_targets(p0 + a * (p1 - p0), q0 + a * (q1 - q0))
             self._physics(self.hand + a * (hand - self.hand))
             fsum += self.forces.read(self.d)
-        self.pose, self.hand = pose.copy(), hand.copy()
+        self.target, self.hand = (p1, q1), hand.copy()
         d = self.d
-        out = {"hand_q": d.qpos[self.adr[~self.is_arm]].copy(), "tip_force": fsum / self.substeps,
+        out = {"hand_q": d.qpos[self.adr].copy(), "tip_force": fsum / self.substeps,
                "tip_pos": d.xpos[self.tips].copy(),
                "base_err_mm": np.array([np.linalg.norm(d.xpos[self.base[s]] - d.mocap_pos[self.mocap[s]]) * 1000 for s in SIDES])}
         for name, b in self.obj.items():
             out[name] = np.r_[d.xpos[b], d.xquat[b]]
         out["wipe_force"] = self._pair_force("eraser", "plate")
+        az = d.geom_xmat[self.plate_geoms].reshape(-1, 3, 3)[:, 2, 2]                              # z of each cylinder's axis
+        r, h = self.m.geom_size[self.plate_geoms, 0], self.m.geom_size[self.plate_geoms, 1]
+        out["plate_low"] = float((d.geom_xpos[self.plate_geoms, 2] - h * np.abs(az) - r * np.sqrt(np.clip(1 - az ** 2, 0, 1))).min())  # its lowest point
         return out
 
     def _pair_force(self, a: str, b: str) -> float:

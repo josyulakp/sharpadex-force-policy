@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SharpaDex Stage 3 in Simulation</title>
+<meta name="description" content="Corrections learned from reward around the frozen four-expert model, in a physics simulation of one task: result on held-out scenes, videos, and the training curves of all three stages.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* layout: a reading column with the result on top, charts in panels, then a two-up grid of side-by-side videos with an outcome filter, then the curves of stages 1 and 2 */
+:root{
+  --bg:#f7f8f8; --surface:#fcfcfb; --ink:#0f1413; --ink2:#4c5553; --ink3:#7b8482; --rule:#dfe3e2; --band:#e9eeec;
+  --s1:#2a78d6; --s1b:#86b4ea; --s2:#d9601f; --slate:#3d4852; --op:#9aa5b1; --on:#ffffff;
+  --sans:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121514; --surface:#1a1d1c; --ink:#eef1f0; --ink2:#bcc4c1; --ink3:#8a9390; --rule:#2e3432; --band:#252b29;
+  --s1:#4a94ee; --s1b:#2f5f9c; --s2:#e2713a; --slate:#b3bdc6; --op:#6f7a84; --on:#ffffff; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121514; --surface:#1a1d1c; --ink:#eef1f0; --ink2:#bcc4c1; --ink3:#8a9390; --rule:#2e3432; --band:#252b29;
+  --s1:#4a94ee; --s1b:#2f5f9c; --s2:#e2713a; --slate:#b3bdc6; --op:#6f7a84; --on:#ffffff; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+img,video{max-width:100%}
+[hidden]{display:none!important}
+.wrap{max-width:1080px;margin:0 auto;padding-block:32px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:48px}
+h1{font-size:30px;font-weight:600;margin:0;letter-spacing:-.01em;text-wrap:balance;line-height:1.2}
+h2{font-size:21px;font-weight:600;margin:0;text-wrap:balance;line-height:1.3}
+h3{font-size:15.5px;font-weight:600;margin:8px 0 0}
+p{margin:0;max-width:70ch;color:var(--ink2)}
+p b,li b{color:var(--ink);font-weight:600}
+ul{margin:0;padding-left:20px;max-width:70ch;color:var(--ink2);display:flex;flex-direction:column;gap:6px}
+section,header{display:flex;flex-direction:column;gap:14px;min-width:0}
+section{scroll-margin-top:16px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+.lede{font-size:17px;color:var(--ink);max-width:64ch}
+a{color:var(--s1)}
+a:focus-visible,button:focus-visible,video:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+nav{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13.5px}
+code{font-family:var(--mono);font-size:12.5px;background:var(--band);padding:1px 4px;border-radius:3px;overflow-wrap:anywhere}
+pre{margin:0;background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.6;color:var(--ink2)}
+.cap{font-size:13px;color:var(--ink3);max-width:76ch}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{border-top:2px solid var(--ink);padding-top:10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile.hero{border-top-color:var(--s1)}
+.tile .n{font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.tile .n small{font-size:15px;font-weight:400;color:var(--ink3)}
+.tile .l{font-weight:600;font-size:14px}
+.tile .d{font-size:13px;color:var(--ink2)}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+/* charts */
+.chart{margin:0;display:flex;flex-direction:column;gap:8px;min-width:0}
+.chart .ylab{font-size:12.5px;color:var(--ink3)}
+.chart .scroll{overflow-x:auto;min-width:0}
+.chart svg{display:block;width:100%;height:auto;font-family:var(--sans)}
+.grid{stroke:var(--rule);stroke-width:1}
+.axis{stroke:var(--ink3);stroke-width:1}
+.tick,.lab,.cat{fill:var(--ink3);font-size:12px}
+.cat{fill:var(--ink2)}
+.end,.val{fill:var(--ink);font-size:12.5px;font-weight:500;font-variant-numeric:tabular-nums}
+.ln{fill:none;stroke-linejoin:round;stroke-linecap:round}
+.ref{stroke-width:1.2;stroke-dasharray:5 4}
+.err{stroke:var(--ink);stroke-width:1.5}
+.cross{stroke:var(--ink3);stroke-width:1}
+.hit{fill:transparent;cursor:crosshair}
+.ln.c-s3,.ref.c-s3{stroke:var(--s1)} .ln.c-s3b{stroke:var(--s1b)} .ln.c-ctl{stroke:var(--s2)} .ln.c-frozen,.ref.c-frozen{stroke:var(--slate)} .ln.c-op{stroke:var(--op)}
+.bar.c-s3{fill:var(--s1)} .bar.c-s3b{fill:var(--s1b)} .bar.c-ctl{fill:var(--s2)} .bar.c-frozen{fill:var(--slate)} .bar.c-op{fill:var(--op)}
+.key{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12.5px;color:var(--ink2)}
+.key i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.key i.c-s3{background:var(--s1)} .key i.c-s3b{background:var(--s1b)} .key i.c-ctl{background:var(--s2)} .key i.c-frozen{background:var(--slate)} .key i.c-op{background:var(--op)}
+.key i.dash{height:0;background:none;border-top:2px dashed var(--slate)} .key i.dash.c-s3{border-top-color:var(--s1)}
+#tip{position:fixed;z-index:20;pointer-events:none;background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:8px 10px;font-size:12.5px;color:var(--ink2);box-shadow:0 4px 14px rgba(0,0,0,.14);max-width:320px}
+#tip b{color:var(--ink);font-weight:600;display:block;margin-bottom:3px}
+#tip div{display:flex;justify-content:space-between;gap:14px}
+#tip i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+#tip i.c-s3{background:var(--s1)} #tip i.c-s3b{background:var(--s1b)} #tip i.c-ctl{background:var(--s2)} #tip i.c-frozen{background:var(--slate)}
+#tip span:last-child{font-variant-numeric:tabular-nums;color:var(--ink)}
+/* tables */
+.tw{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums;width:100%}
+th,td{text-align:right;padding:6px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal;min-width:170px}
+th{font-weight:600;color:var(--ink2);font-size:12.5px;border-bottom-color:var(--ink3)}
+tr.hl td{font-weight:600}
+.ps{font-weight:400;color:var(--ink3);font-size:12.5px}
+table.narrow{max-width:640px}
+/* videos */
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--rule);padding-block:10px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:13.5px}
+.bar .lab{color:var(--ink3);font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--rule);border-radius:6px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;font-size:13px;color:var(--ink2);background:none;border:0;border-left:1px solid var(--rule);padding:6px 12px;cursor:pointer;min-height:32px}
+.seg button:first-child{border-left:0}
+.seg button:hover{background:var(--band)}
+.seg button[aria-pressed="true"]{background:var(--s1);color:var(--on);font-weight:500}
+.vids{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 18px}
+@media (max-width:820px){.vids{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:820px){.bar{position:static}}
+.vid{margin:0;display:flex;flex-direction:column;gap:5px;min-width:0}
+.cols{display:grid;grid-template-columns:1fr 1fr;font-family:var(--mono);font-size:11px;color:var(--ink3);text-align:center}
+.cols span:last-child{color:var(--s1)}
+video{width:100%;aspect-ratio:964/404;background:var(--band);border-radius:4px;display:block}
+figcaption{display:flex;flex-direction:column;gap:1px;font-size:13px;color:var(--ink2)}
+figcaption b{color:var(--ink);font-weight:600}
+.vid[data-kind="broken"] figcaption b{color:var(--s2)}
+.uid{font-family:var(--mono);font-size:11px;color:var(--ink3);overflow-wrap:anywhere}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:820px){.two{grid-template-columns:minmax(0,1fr)}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">SharpaDex force policy · stage 3 in simulation</div>
+  <h1>Corrections learned from reward around the frozen four-expert model</h1>
+  <p class="lede">The released model is frozen. A small network learns bounded corrections to its commands from the outcome alone, in a physics simulation of <code>clean_plate_with_eraser</code>. On {{SCENES}} scenes it never trained in, task success rises from {{FROZEN}} % to {{S3}} %.</p>
+  <nav aria-label="Sections"><a href="#result">Result</a><a href="#videos">Videos</a><a href="#setup">Setup</a><a href="#why">Where the gain comes from</a><a href="#failed">What failed first</a><a href="#stages">Curves of stages 1 and 2</a><a href="#limits">Limits</a><a href="#reproduce">Reproduce</a></nav>
+  <nav aria-label="Other pages"><a href="../">Expert mixture</a><a href="../architecture/">Model anatomy</a><a href="../rollouts/">World-model rollouts</a><a href="../flow_diagnosis/">Flow-matching diagnosis</a><a href="{{GH}}/blob/main/RESULTS.md">Results</a><a href="https://huggingface.co/josyula/sharpadex-force-policy">Checkpoints</a></nav>
+</header>
+
+<section id="result">
+  <div class="tiles">
+    <div class="tile"><div class="n">{{FROZEN}}<small> %</small></div><div class="l">Frozen model</div><div class="d">Task success on {{SCENES}} held-out scenes, 20 perturbations each</div></div>
+    <div class="tile hero"><div class="n">{{S3}}<small> %</small></div><div class="l">With stage-3 corrections</div><div class="d">{{DIFF}}</div></div>
+    <div class="tile"><div class="n">{{S3B}}<small> %</small></div><div class="l">Second training seed</div><div class="d">{{DIFF2}}</div></div>
+    <div class="tile"><div class="n">{{CTL}}<small> %</small></div><div class="l">Matched control</div><div class="d">Same training without the critic's gradient: {{DIFFC}}</div></div>
+  </div>
+  <p><b>{{BETTER}} of the {{SCENES}} held-out scenes improve.</b> The corrections were trained in 240 other scenes and never saw these. Every run is scored the same way: the eraser must travel at least 10 cm over the plate while it presses on it and the plate is held, and the plate must lie on the table again at the end.</p>
+  <div class="panel">{{BARS}}</div>
+  <div class="tw"><table>
+    <thead><tr><th>{{SCENES}} held-out scenes × 20 perturbations</th><th>Operator's commands</th><th>Frozen model</th><th>With corrections</th><th>Corrections minus frozen (paired)</th></tr></thead>
+    <tbody>{{TABLE}}</tbody>
+  </table></div>
+  <p class="cap">Brackets are 95 % bootstrap intervals over scenes; the difference is paired by scene and perturbation. Without perturbation (one run per scene, the videos below) success is {{RAW_F}} % for the frozen model and {{RAW_S}} % with the corrections. The table is the first training run.</p>
+  <p><b>The operator's own commands succeed in only {{OP}} % of the simulated runs.</b> The simulation is a rough reconstruction of each recording, so these are success rates in that simulation, not estimates for the robot (see <a href="#limits">limits</a>).</p>
+  <h3>Learning curve</h3>
+  <div class="panel">{{LEARN}}</div>
+  <p class="cap">Every fifth training episode runs without exploration noise and stays out of training, alternately in a training scene and in one of 32 validation scenes set aside from them. The critic's gradient reaches the actor from about 2,500 episodes on. 24,000 episodes take 2.9 hours on 30 CPU processes and one GPU.</p>
+</section>
+
+<section id="videos">
+  <h2>All {{SCENES}} held-out scenes, frozen model against corrected model</h2>
+  <p>Each video shows the same scene twice: the frozen model's commands on the left, the same commands with the learned corrections on the right. These are the scenes as reconstructed, without perturbation. In {{N_FIXED}} the corrections turn a failure into a success, in {{N_BOTH}} both succeed, in {{N_NEITHER}} both fail and in {{N_BROKEN}} the corrections break a success. Under each video: how the same scene went under 20 perturbations.</p>
+  {{VIDEOS}}
+  <p class="cap">Videos play at half the simulated frame rate (15 frames per second, real time). The strip above each half gives the verdict and the wiped path of that run. The hands float because the simulation moves the two hand bases directly, without arms.</p>
+</section>
+
+<section id="setup">
+  <h2>The setup</h2>
+  <ul>
+    <li><b>Scene.</b> Two hands, a table, a plate and an eraser in MuJoCo. Plate, eraser and table are placed per recording from the stereo cameras and the recorded fingertips. 301 recordings of the task give 240 training scenes, 32 validation scenes and {{SCENES}} held-out scenes; the held-out scenes are the model's own held-out episodes. Friction, masses and five scene corrections were calibrated on 60 training scenes so that the operator's commands complete the task as often as possible.</li>
+    <li><b>Frozen model.</b> The released four-expert model reads the recorded observations and re-predicts every 8 frames. Its commands are the reference. It does not see the simulated scene.</li>
+    <li><b>Corrections.</b> Every 0.2 s a network with two hidden layers of 256 units (the actor) outputs 12 numbers: a position offset of each hand base, within ±2 cm per axis, and three finger synergies per hand, within ±0.75 standard deviations, both rate-limited.</li>
+    <li><b>What the actor sees.</b> The frozen model's contact and phase read-outs, the plate and the eraser relative to the hands, the simulated fingertip forces, the hand posture, and how far hands and fingers are from their commands. Nothing that identifies the recording.</li>
+    <li><b>Learning.</b> Facet-0's online adaptation with the robot replaced by the simulator: twin critics, a readiness gate on the critic before any of its gradient reaches the actor, and imitation of the corrections of successful episodes with a weight that falls from 1.0 to 0.3. The critic also sees the reference motion and the simulator's object state; it is not deployed.</li>
+    <li><b>Reward.</b> Dense progress, at most 1 per episode: plate lifted, eraser lifted, plate held during the wipe, wiped path, plate set down.</li>
+    <li><b>Perturbation.</b> Every training episode shifts both objects by up to 1 cm, turns the eraser by up to 8° and scales friction and mass by 0.7 to 1.3. The evaluation uses 20 fixed perturbations per scene, the same for every policy.</li>
+  </ul>
+</section>
+
+<section id="why">
+  <h2>Where the gain comes from</h2>
+  <div class="two">
+    <div class="tw"><table>
+      <thead><tr><th>Share of the {{RUNS}} held-out runs</th><th>Frozen model</th><th>With corrections</th></tr></thead>
+      <tbody>{{MODES}}</tbody>
+    </table></div>
+    <div class="tw"><table>
+      <thead><tr><th>In place of the actor</th><th>Task success</th><th>Minus frozen (paired)</th></tr></thead>
+      <tbody>{{FIXED}}</tbody>
+    </table></div>
+  </div>
+  <ul>
+    <li><b>Fewer wipes that are too short, fewer failed pick-ups.</b> The left table sorts every held-out run by how it ended.</li>
+    <li><b>It is a reaction to the scene, not a fixed adjustment.</b> Replacing the actor with its own mean correction, or with one mean for the wiping phase and one for the rest, recovers a small part of the gain. The actor is {{VS_TWO}} above the better of the two.</li>
+    <li><b>The critic's gradient is what makes it work.</b> The matched control keeps the schedule, the exploration and the imitation of successful episodes and removes only the critic's gradient. It ends below the frozen model at {{CTL}} %.</li>
+    <li><b>A second training run confirms the size.</b> Another seed reaches {{S3B}} % ({{DIFF2}}). It picks the plate up more often and wipes further, as the first run does; it does not drop the plate less often, so that part of the first run's gain is not a stable effect.</li>
+  </ul>
+</section>
+
+<section id="failed">
+  <h2>What failed first</h2>
+  <ul>
+    <li><b>First design: the actor also read the frozen model's pooled token.</b> Success in the training scenes rose from 24 % to 50 %; on the held-out scenes it went from 43 % to 37 %. The token is computed from the recorded cameras, so it identifies the recording, and the actor had learned one set of corrections per training scene.</li>
+    <li><b>Second design: no token, but the actor still saw the reference motion.</b> Stopped after 6,550 episodes with the training scenes at 45 % and the validation scenes flat at 34 to 38 %. The reference motion identifies the recording as well. In the final design only the critic sees it.</li>
+    <li><b>First task definition.</b> "Plate back on the table" required a tilt under 45°, which cut through the pose the model plate comes to rest in, and the wipe path counted contact jitter. Both were replaced. The numbers of the first two designs are under the first definition.</li>
+    <li><b>The held-out scenes were looked at once before the final run,</b> to diagnose the first design. Every later choice was made on the 32 validation scenes, and the final actor is the last checkpoint, not a selected one.</li>
+  </ul>
+</section>
+
+<section id="stages">
+  <h2>Training curves of stages 1 and 2</h2>
+  <p>The three stages follow Facet-0: supervised training, offline refinement with a critic, online corrections. Stage 3 above was applied directly to the stage-1 model. <b>Stage 2 was run on an earlier flow-matching policy, gave no clear gain, and is not part of the released model.</b></p>
+  <h3>Stage 1: supervised training of the released four-expert model</h3>
+  <div class="panel">{{S1}}</div>
+  <div class="tw"><table class="narrow">
+    <thead><tr><th>Held-out joint error, mrad (mean of 3 seeds)</th><th>25,000 steps</th><th>50,000 steps</th></tr></thead>
+    <tbody><tr class="hl"><td>Four experts, with force (released)</td><td>{{M25}}</td><td>{{M50}}</td></tr><tr><td>Same model without force</td><td>{{N25}}</td><td>{{N50}}</td></tr></tbody>
+  </table></div>
+  <p class="cap">Training logs one batch every 200 steps (<code>runs/headline/full/seed*/train_log.json</code>). There is no held-out curve during training: each run keeps two checkpoints, and both were evaluated on the 115 held-out episodes.</p>
+  <h3>Stage 2: offline refinement with a critic, on the flow-matching policy</h3>
+  <div class="two">
+    <div class="panel">{{S2A}}</div>
+    <div class="panel">{{S2C}}</div>
+  </div>
+  <div class="panel">{{S2B}}</div>
+  <div class="tw"><table class="narrow">
+    <thead><tr><th>Held-out joint error, mrad (mean of 3 seeds)</th><th>After 8,000 more steps</th></tr></thead>
+    <tbody><tr><td>Continued training (control)</td><td>{{CONT}}</td></tr><tr class="hl"><td>Refined with the critic's labels</td><td>{{REF}}</td></tr></tbody>
+  </table></div>
+  <p class="cap">The critic predicts the return of a reward built from the dataset's subtask labels, from the frozen policy's features. On held-out episodes it ends at {{CRIT}} against {{CRIT0}} for a constant guess (correlation {{CORR}}). Frames with the top 20 % of credit are tagged, and the policy is trained 8,000 more steps with a tagged branch. The difference to plain continued training is −0.10 mrad [−0.21, +0.02]. The critic curve is a re-run with the original settings and seed, because the first run printed its curve without saving it.</p>
+</section>
+
+<section id="limits">
+  <h2>Limits</h2>
+  <ul>
+    <li><b>A rough simulation, not a robot.</b> Simulated fingertip forces peak at about 200 N where the recorded ones peak at about 40 N; the plate is a disc on a stem; the arms are left out. The operator's own commands complete the task in a third of the runs, so most failures of the frozen model are failures of the reconstruction. What the corrections learned is in part how to do the task in this simulation.</li>
+    <li><b>The frozen model does not close the loop.</b> It reads the recorded observations; only the corrections react to the simulated scene.</li>
+    <li><b>The actor is given the object poses</b> from the simulator. On a robot they would have to come from the cameras.</li>
+    <li><b>The critic sees the simulator's state.</b> It is used in training only.</li>
+    <li><b>One task, two training runs.</b></li>
+  </ul>
+</section>
+
+<section id="reproduce">
+  <h2>Reproduce</h2>
+  <pre>python scripts/s3_prepare.py                                   # commands of the frozen model for every episode
+python scripts/s3_scenes.py                                    # build each episode's scene
+python scripts/s3_train.py name=rl                             # the corrections (2.9 h)
+python scripts/s3_train.py name=rl_seed1 learner.seed=1        # second seed
+python scripts/s3_train.py name=control learner.actor_q_weight=0
+python scripts/s3_eval.py name=rl seeds=20                     # held-out evaluation (also rl_seed1, control)
+python scripts/s3_fixed.py name=rl                             # fixed corrections in place of the actor
+python scripts/s3_video.py name=rl pick=29                     # the videos of this page
+python scripts/stage_curves.py                                 # curves of stages 1 and 2
+python scripts/build_stage3_page.py                            # this page</pre>
+  <p class="cap">Settings: <code>configs/stage3.yaml</code> and <code>configs/sim.yaml</code>. Written up in <a href="{{GH}}/blob/main/RESULTS.md#7-stage-3-corrections-learned-in-a-physics-simulation">RESULTS.md, section 7</a>; commands in the <a href="{{GH}}#stage-3-in-simulation">README</a>.</p>
+</section>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+// outcome filter for the videos
+const picks = document.querySelectorAll('.seg button');
+picks.forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('video').forEach(v => v.pause());
+  document.querySelectorAll('.vid').forEach(f => { f.hidden = !!b.dataset.pick && f.dataset.kind !== b.dataset.pick; });
+  picks.forEach(o => o.setAttribute('aria-pressed', String(o === b)));
+}));
+// one video at a time
+document.querySelectorAll('video').forEach(v => v.addEventListener('play', () => {
+  document.querySelectorAll('video').forEach(o => { if (o !== v) o.pause(); });
+}));
+// hover read-out for the line charts
+const tip = document.getElementById('tip');
+document.querySelectorAll('script[type="application/json"][data-for]').forEach(sc => {
+  const d = JSON.parse(sc.textContent), svg = document.getElementById(sc.dataset.for);
+  const hit = svg.querySelector('.hit'), cross = svg.querySelector('.cross');
+  const move = e => {
+    const r = svg.getBoundingClientRect();
+    const sx = (e.clientX - r.left) / r.width * d.w;
+    const xv = Math.min(d.x1, Math.max(d.x0, d.x0 + (sx - d.L) / (d.w - d.L - d.R) * (d.x1 - d.x0)));
+    const rows = d.series.map(s => {
+      let k = 0;
+      for (let i = 1; i < s.x.length; i++) if (Math.abs(s.x[i] - xv) < Math.abs(s.x[k] - xv)) k = i;
+      return Math.abs(s.x[k] - xv) > (d.x1 - d.x0) * 0.03 ? '' :
+        `<div><span><i class="${s.cls}"></i>${s.name}</span><span>${s.y[k].toFixed(d.decimals)}${d.unit}</span></div>`;
+    }).join('');
+    const cx = d.L + (xv - d.x0) / (d.x1 - d.x0) * (d.w - d.L - d.R);
+    cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.removeAttribute('hidden');
+    tip.innerHTML = `<b>${xv.toFixed(1)} · ${d.xlabel}</b>${rows}`;
+    tip.hidden = false;
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = Math.max(8, Math.min(e.clientX + 14, window.innerWidth - w - 8)) + 'px';
+    tip.style.top = Math.max(8, Math.min(e.clientY + 14, window.innerHeight - h - 8)) + 'px';
+  };
+  const leave = () => { tip.hidden = true; cross.setAttribute('hidden', ''); };
+  hit.addEventListener('pointermove', move);
+  hit.addEventListener('pointerdown', move);
+  hit.addEventListener('pointerleave', leave);
+});
+window.addEventListener('scroll', () => { tip.hidden = true; }, {passive: true});
+</script>
+</html>

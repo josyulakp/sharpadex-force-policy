@@ -22,3 +22,13 @@ runs/**/*.npz
 reports/**/*.npz
 checkpoints/
 .cache/
+MUJOCO_LOG.TXT
+
+# built by scripts/build_stage3_page.py and published on the gh-pages branch (the videos are in reports/stage3/videos/)
+reports/stage3/page/
+
+# stage 3: the final actor of each run is small (1.4 MB) and stays in git with its synergy basis; intermediate checkpoints do not
+!runs/stage3/*/ckpt.pt
+!runs/stage3/*/synergy.npz
+runs/stage3/smoke/
+runs/stage3/_gate_closed/

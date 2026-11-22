@@ -1,0 +1,137 @@
+stage3:
+  data_dir: /opt/dlami/nvme/sharpadex_s3
+  task: clean_plate_with_eraser
+  base_run: runs/headline/full/seed0
+  execute_steps: 8
+  outcome:
+    lift_m: 0.03
+    wipe_force_n: 1.0
+    wipe_path_m: 0.1
+    placed_lift_m: 0.03
+    placed_tilt_deg: 45
+  env:
+    decision_frames: 6
+    pos_bound_m: 0.02
+    pos_rate_m: 0.008
+    synergies: 3
+    synergy_bound_std: 0.75
+    synergy_rate_std: 0.3
+    max_frames: 900
+    drop_m: 0.05
+    randomize:
+      object_xy_m: 0.004
+      eraser_yaw_deg: 4
+      friction:
+      - 0.8
+      - 1.2
+      mass:
+      - 0.8
+      - 1.2
+  reward:
+    plate_lift: 0.1
+    eraser_lift: 0.1
+    hold: 0.2
+    wipe_subtask: 2
+    wipe: 0.4
+    wipe_full_m: 0.2
+    placed: 0.2
+    dropped: -0.2
+  learner:
+    workers: 30
+    episodes: 30000
+    seed_episodes: 400
+    monitor_every: 5
+    noise_std: 0.3
+    noise_corr:
+    - 0.7
+    - 0.9
+    - 0.98
+    gamma: 0.99
+    tau: 0.005
+    batch: 256
+    hidden: 256
+    token_proj: 64
+    actor_lr: 3.0e-05
+    critic_lr: 0.0003
+    updates_per_transition: 0.5
+    policy_delay: 2
+    target_noise: 0.2
+    target_noise_clip: 0.5
+    critic_target: td_mc_max
+    actor_q_weight: 1.0
+    q_scale: 1.0
+    action_penalty: 0.02
+    bc_beta: 1.0
+    bc_beta_end: 0.3
+    bc_anneal_updates: 100000
+    capacity: 1500000
+    gate:
+      min_updates: 20000
+      eval_every: 2000
+      passes: 3
+      min_explained: 0.25
+      max_disagreement: 0.08
+    checkpoint_every: 2000
+sim:
+  timestep: 0.0033333333
+  impratio: 10
+  weld_solref:
+  - 0.0135
+  - 1.0
+  table:
+    x: 0.68
+    y: 0.0
+    z: 0.81
+    half_x: 0.42
+    half_y: 0.7
+    friction: 0.8
+  plate:
+    radius: 0.095
+    rim_thickness: 0.0116
+    foot_radius: 0.0332
+    foot_height: 0.05
+    steps: 1
+    flare: 2.0
+    mass: 0.28
+    friction: 2.88
+  eraser:
+    half_size:
+    - 0.07
+    - 0.0275
+    - 0.015
+    handle_half_size:
+    - 0.05
+    - 0.014
+    - 0.018
+    mass: 0.08
+    friction: 1.7
+  camera:
+    pos:
+    - 1.5
+    - 0.0
+    - 1.75
+    target:
+    - 0.55
+    - 0.0
+    - 0.85
+  settle_s: 0.5
+  grasp_force_n: 1.0
+  eraser_subtask: 1
+  video:
+    width: 640
+    height: 480
+    stride: 2
+  score:
+    lift_m: 0.03
+    wipe_force_n: 1.0
+  fingertip_radius: 0.009
+  plate_subtask: 0
+  rim_overlap: 0.015
+  rim_radius_tolerance: 0.02
+  hand_kp_scale: 1.041
+  calib:
+    plate_dx: 0.0105
+    plate_dy: -0.0043
+    plate_dz: 0.0011
+    plate_dr: 0.0143
+    table_dz: -0.0047

@@ -1,0 +1,90 @@
+# Stage 3: bounded actor-critic corrections around the frozen four-expert policy, trained in the MuJoCo scene (sim/).
+# Follows Facet-0's online adaptation (frozen policy and token, reference action, TD3+BC with a gated critic); the robot is replaced by the simulator.
+data_dir: /opt/dlami/nvme/sharpadex_s3   # command streams, scene survey, replay checkpoints (large, not in git)
+task: clean_plate_with_eraser
+base_run: runs/headline/full/seed0       # the frozen policy that supplies the reference commands and the token
+execute_steps: 8                         # the frozen policy re-predicts every this many frames (as in scripts/rollout.py)
+
+outcome:                                 # what counts as doing the task in the simulator (sim/task.py)
+  lift_m: 0.03                           # plate / eraser count as held above this height over their resting height
+  wipe_force_n: 1.0                      # eraser pressed on the plate
+  wipe_path_m: 0.10                      # success needs this much eraser travel on the held plate ...
+  path: smooth                           #     measured on the eraser's position in the plate's frame, averaged over the last
+  smooth_frames: 9                       #     9 frames (0.3 s), so contact jitter does not count as wiping (`raw` counted it: about half as much again)
+  placed: resting                        # ... and the plate back on the table at the end: its lowest point within
+  placed_gap_m: 0.015                    #     this distance of the table
+  placed_tilt_deg: 80                    #     and neither on its edge nor upside down. The model plate stands on a narrow stem and comes to rest
+                                         #     leaning; the first definition (`upright`: origin within 3 cm, tilt under 45 deg) cut through those poses
+  placed_lift_m: 0.03                    #     (used by `upright` only)
+
+env:
+  # What the actor sees (sim/env.py), followed by its own last correction and the time. Kept to signals that describe the
+  # state of the simulated scene, so that a correction has to be a reaction to it:
+  #   phase          the frozen policy's contact probability and subtask probabilities (from the recorded observations)
+  #   objects        plate and eraser relative to the hands and to each other (what live cameras would show)
+  #   tip_force      simulated fingertip forces
+  #   synergy, synergy_error, base_error    hand posture, and how far hands and fingers are from their commands
+  # Left out on purpose: token (the frozen policy's pooled token; it is computed from the recorded cameras and only identifies
+  # the recording) and the per-episode reference motion (ahead, synergy_ref, hand_joints, joint_error, gate, force_forecast).
+  # With them the corrections were fitted to each training scene and did not carry over (runs v1_recorded_token, v2_objects_task1).
+  actor_blocks: [phase, objects, tip_force, synergy, synergy_error, base_error]
+  critic_blocks: [gate, force_forecast, hand_joints, joint_error, ahead, synergy_ref]     # the critic may know the scene: it is not deployed
+  decision_frames: 6                     # the actor decides every 6 frames (5 Hz); the correction is blended in over those frames
+  pos_bound_m: 0.02                      # box of the hand-base position correction, per axis, per hand
+  pos_rate_m: 0.008                      # largest change of that correction per decision (4 cm/s)
+  synergies: 3                           # hand corrections act along the first principal components of the operator's hand commands
+  synergy_bound_std: 0.75                # box of each synergy correction, in standard deviations of that component in the data
+  synergy_rate_std: 0.3                  # largest change per decision
+  max_frames: 900                        # longer recordings (30 s) are left out
+  drop_m: 0.05                           # plate this far below its resting height = dropped; the episode ends
+  randomize:                             # scene perturbation at every training reset (the scenes are estimates, see sim/replay.py)
+    object_xy_m: 0.01                    # uniform shift of plate and eraser on the table, per axis (the calibration moved the plate by about this much)
+    eraser_yaw_deg: 8
+    friction: [0.7, 1.3]                 # scale of plate and eraser friction
+    mass: [0.7, 1.3]                     # scale of plate and eraser mass
+reward:                                  # dense progress reward, at most 1 per episode
+  plate_lift: 0.1                        # once, when the plate is first held
+  eraser_lift: 0.1                       # once, when the eraser is first held
+  hold: 0.2                              # spread over the frames the recording labels as wiping, earned while the plate is held
+  wipe_subtask: 2                        #     subtask index of "wipe"
+  wipe: 0.4                              # in proportion to the wiped path, full at `wipe_full_m`
+  wipe_full_m: 0.15
+  placed: 0.2                            # at the end, if the plate was held and is back on the table
+  dropped: -0.2                          # plate dropped
+
+learner:                                 # TD3+BC with a gated critic, after Facet-0's online adaptation (facet-online-adaptation/docs/algorithm.md)
+  workers: 30                            # simulator processes
+  seed: 0                                # of the networks, the order of scenes, the perturbations and the exploration noise (not of the scene split)
+  validation_scenes: 32                  # training scenes set aside (seeded): never trained in; every other monitor episode runs in one of them
+  episodes: 24000                        # training episodes in total (2.9 h with 30 processes)
+  seed_episodes: 400                     # first episodes: the frozen policy plus exploration noise, no updates (data for the critic and the normalisation)
+  monitor_every: 5                       # every 5th episode runs without noise and stays out of training: alternately a training scene (feeds the
+                                         #     critic gate) and a validation scene (the generalisation curve)
+  noise_std: 0.3                         # exploration noise on the correction, in units of the box
+  noise_corr: [0.7, 0.9, 0.98]           # its correlation from one decision to the next, one value drawn per episode
+  gamma: 0.99
+  tau: 0.005
+  batch: 256
+  hidden: 256
+  token_proj: 64                         # the frozen token (256) is projected to this size (only with env.actor_token)
+  actor_lr: 3.0e-5
+  critic_lr: 3.0e-4
+  updates_per_transition: 0.5            # critic updates per collected transition
+  policy_delay: 2                        # critic updates per actor update
+  target_noise: 0.2
+  target_noise_clip: 0.5
+  critic_target: td_mc_max               # td | mc | td_mc_max (TD target, never below the return that was actually obtained)
+  actor_q_weight: 1.0                    # 0 = the matched control: same schedule and imitation term, no Q gradient
+  q_scale: 1.0                           # the Q term is divided by mean |Q| and multiplied by this (TD3+BC)
+  action_penalty: 0.02                   # weight of the squared correction: no correction unless it pays
+  bc_beta: 1.0                           # weight of imitating the corrections of successful episodes ...
+  bc_beta_end: 0.3                       # ... annealed to this over
+  bc_anneal_updates: 100000              #     this many critic updates taken while the gate is open
+  capacity: 1500000
+  gate:                                  # Q gradients reach the actor only while the critic passes these checks on the monitor episodes
+    min_updates: 20000
+    eval_every: 2000
+    passes: 3                            # consecutive passing evaluations to open; one failure closes
+    min_explained: 0.25                  # share of the variance of the monitor episodes' returns that Q explains. A first run with 0.5 and
+    max_disagreement: 0.08               #     0.05 never opened: after 50,000 updates the critic stood at 0.33 and 0.057 (mean |Q1 - Q2|)
+  checkpoint_every: 2000                 # episodes

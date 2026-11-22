@@ -7,12 +7,14 @@ does such a model need.
 
 **Results, the ablations and the path that led to the released model: [RESULTS.md](RESULTS.md).**
 In one line: the four-expert model reaches 13.95 mrad joint error on the held-out episodes, the same model without force 14.91.
+In a physics simulation of one task, corrections learned from reward around the frozen model raise task success on scenes
+never trained in from 29 % to 63 % (58 % in a second training run; [RESULTS.md, section 7](RESULTS.md#7-stage-3-corrections-learned-in-a-physics-simulation)).
 
 | Where | What |
 |---|---|
 | This repository | Code, configs, the fixed split, every run's config, training log and evaluation summary, result tables, figures, world-model rollout videos |
 | [Hugging Face: josyula/sharpadex-force-policy](https://huggingface.co/josyula/sharpadex-force-policy) | Released checkpoints (all seeds), tactile and video world-model weights, per-frame evaluation files |
-| Branch `gh-pages`, served at <https://josyulakp.github.io/sharpadex-force-policy/> | The HTML explainer pages and the [rollout videos page](https://josyulakp.github.io/sharpadex-force-policy/rollouts/) |
+| Branch `gh-pages`, served at <https://josyulakp.github.io/sharpadex-force-policy/> | The HTML explainer pages, the [rollout videos page](https://josyulakp.github.io/sharpadex-force-policy/rollouts/) and the [stage 3 page](https://josyulakp.github.io/sharpadex-force-policy/stage3/) |
 
 Every parameter lives in `configs/default.yaml`; any of them can be overridden on the command line as
 `section.key=value` without touching code. Experiment groups (named sets of overrides × seeds) are in `configs/experiments.yaml`.
@@ -109,13 +111,38 @@ Each step's script documents its exact command in its first lines.
 | Tactile world model (TacForeSight) | `tf_prepare.py`, `tf_train.py`, `tf_readout.py`, `tf_features.py` | A clone of TacForeSight (`tactile_world_model.src`) |
 | Video world model (PrimeSim), policy in the loop | `ps_prepare.py`, `ps_train.py`, `ps_rollout.py`, `ps_long.py`, `ps_kinematics.py`, `ps_policy.py`, `ps_report.py` | A clone of PrimeSim with its own environment and base checkpoints (`primesim_world_model.src`) |
 | Cosmos-Predict2 (earlier attempt) | `wm_prepare.py`, `wm_train.py`, `wm_rollout.py` | A clone of cosmos-predict2 (`video_world_model.src`) |
-| Physics replay (MuJoCo) | `sim/run.py`, `scripts/sim_streams.py` | A MuJoCo environment and the robot model |
+| Physics replay (MuJoCo) of single command streams; stage 3 above learns in the same scene | `scripts/sim_streams.py`, `sim/run.py` | The robot model (see stage 3) |
 
 The fine-tuned PrimeSim weights and the kinematics networks are in the Hugging Face repository under `checkpoints/primesim/`
 (copy them to `<primesim src>/models/<name>/` and next to the PrimeSim data folder). The rollout videos of the released
 model, three seeds and three tasks each, are in `reports/world_model_primesim/policy_headline_full_*`;
 `python scripts/ps_report.py` tabulates them into `reports/results/world_model_policy.md`. All 36 can be watched side by side on the
 [rollout videos page](https://josyulakp.github.io/sharpadex-force-policy/rollouts/).
+
+## Stage 3 in simulation
+
+Bounded corrections around the frozen four-expert model, learned from reward in a MuJoCo scene of
+`clean_plate_with_eraser` (Facet-0's online adaptation with the robot replaced by the simulator). Everything is set in
+`configs/stage3.yaml` (task outcome, what the actor sees, bounds, reward, learner) and `configs/sim.yaml` (the scene).
+Needs `mujoco` (in `requirements.txt`), the public robot model
+[sharpa-north-mujoco](https://github.com/sharpa-robotics/sharpa-north-mujoco) (path at the top of `sim/robot.py`) and
+`MUJOCO_GL=egl` for the videos. Large intermediate files go to `data_dir` of `configs/stage3.yaml`.
+The trained actors (`runs/stage3/{rl,rl_seed1,control}/ckpt.pt`, 1.4 MB each) are in this repository, so the evaluation and the
+videos can be redone without training; they still need the first two steps below for the scenes.
+
+| Step | Command | Output |
+|---|---|---|
+| Commands of the frozen model for every episode of the task | `python scripts/s3_prepare.py` | `<data_dir>/streams/` |
+| Build each episode's scene, replay the operator's and the model's commands in it | `python scripts/s3_scenes.py` | `<data_dir>/scenes.json` |
+| (once) Calibrate friction, masses and scene corrections on the operator's commands | `python scripts/sim_calibrate.py`, then copy `best.json` into `configs/sim.yaml` | `<data_dir>/calibration/` |
+| Train the corrections (2.9 h, 30 CPU processes and one GPU) | `python scripts/s3_train.py name=rl` | `runs/stage3/rl/` |
+| Matched control without the critic's gradient; a second seed | `python scripts/s3_train.py name=control learner.actor_q_weight=0`, `name=rl_seed1 learner.seed=1` | `runs/stage3/<name>/` |
+| Evaluate on the held-out scenes: operator, frozen model, with corrections | `python scripts/s3_eval.py name=rl seeds=20` | `runs/stage3/rl/eval_heldout.json` |
+| Fixed corrections in place of the actor | `python scripts/s3_fixed.py name=rl` | `runs/stage3/rl/fixed_heldout.json` |
+| Figure and table | `python scripts/s3_report.py` | `reports/figures/stage3_curve.png`, `reports/results/stage3.md` |
+| Side-by-side videos of all held-out scenes, frozen model and corrected model | `python scripts/s3_video.py name=rl pick=29` | `reports/stage3/videos/` |
+| Training curves of stages 1 and 2 | `python scripts/stage_curves.py` | `reports/figures/stage1_curves.png`, `stage2_curves.png` |
+| The [stage 3 page](https://josyulakp.github.io/sharpadex-force-policy/stage3/) (text: `reports/stage3/page_template.html`) | `python scripts/build_stage3_page.py` | `reports/stage3/page/` |
 
 ## Other tools
 
@@ -136,14 +163,18 @@ branch shows the released four-expert model.
 ```
 configs/default.yaml       every data / model / training / evaluation parameter
 configs/experiments.yaml   experiment groups = named sets of overrides x seeds
+configs/stage3.yaml        stage 3 in simulation: task outcome, actor inputs, bounds, reward, learner
+configs/sim.yaml           the simulated scene: sizes, masses, friction, calibrated corrections
 sharpa/data/episodes.py    episode index and numeric loading (LeRobot v2.1 export)
 sharpa/data/split.py       10 % held-out per task (season-stratified, seeded) + nested training shares
 sharpa/data/dataset.py     in-memory frame dataset: history / future windows, labels, normalisation stats
 sharpa/model.py            the model and its loss
 sharpa/engine.py           training loop, checkpoint I/O, per-frame held-out evaluation
 sharpa/metrics.py          bootstrap intervals over episodes and seeds, paired differences
+sharpa/stage3.py           stage 3 networks: bounded actor, twin critics
 scripts/                   one script per step (see the tables above)
-sim/                       MuJoCo replay of recorded command streams
+sim/                       MuJoCo scene of the eraser task: replay of command streams (replay.py), task outcome (task.py),
+                           the stage-3 environment (env.py)
 runs/                      per run: config, training log, evaluation summary (checkpoints: Hugging Face)
 reports/                   result tables (results/), figures, data report, world-model rollout videos
 checkpoints/               (after hf download) tactile and video world-model weights
